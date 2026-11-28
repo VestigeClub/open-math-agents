@@ -11,6 +11,8 @@ the Palomar proof of Daniel Veljjanoski and rleshner (Apache-2.0). The recurrenc
 of primes already sieved and uses it when a square bound terminates a branch.
 -/
 
+namespace Sieve204778727327From0To131
+
 namespace ShortPeriod30030
 
 open Finset
@@ -397,6 +399,9 @@ def prime (n : ℕ) : Bool := quick n
 theorem prime_ok (n : ℕ) (hn : n≤25123) : prime n=true ↔ n.Prime := quick_ok hn
 end FastDenseControl
 
+end Sieve204778727327From0To131
+
+open Sieve204778727327From0To131
 open Finset
 namespace IndexedSlicedSieveA25From0To32
 
