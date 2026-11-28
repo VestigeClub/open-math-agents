@@ -1,0 +1,3075 @@
+import FormalConjectures.OEIS.«247824»
+
+/-!
+# Sieve counts at 204,778,727,327 between prime cutoffs 719 and 1,163
+
+For integers from 1 through 204,778,727,327, this certificate counts the additional
+values removed when the prime cutoff rises from 719 to 1,163.
+The Legendre recurrence checks successive groups of 32 primes, uses a wheel of period 510,510 and prime counts
+through 452,524. The identities adapt Physbuzz's A247824 reduction and
+the Palomar proof of Daniel Veljjanoski and rleshner (Apache-2.0). The recurrence carries the number
+of primes already sieved and uses it when a square bound terminates a branch.
+-/
+
+namespace ShortPeriod30030
+
+open Finset
+
+def cop (n : ℕ) : Bool := decide (n%2≠0 ∧ n%3≠0 ∧ n%5≠0 ∧ n%7≠0 ∧ n%11≠0 ∧ n%13≠0)
+
+private def pop (x : ℕ) : ℕ :=
+  let a := x - ((x >>> 1) &&& 0x5555555555555555)
+  let b := (a &&& 0x3333333333333333) + ((a >>> 2) &&& 0x3333333333333333)
+  let c := (b+(b >>> 4)) &&& 0x0f0f0f0f0f0f0f0f
+  ((c*0x0101010101010101) >>> 56)%256
+
+private def packet (i : ℕ) : ℕ := (if i < 7 then (if i < 3 then (if i < 1 then 0x17c808228220808a208017108200220a080288201648228200a00a288200159228800a08a080200014c2882020882882820013f0a20a00a2802802801328202082208282282012520808a08808220a201190808228028228a00010c800a28808228800a010108800820228a202000f58020828008a20a0800e7a28008028220a08a00dc208202282008088200d08808020a2020822800c4820220a00a00a28000b628228820a082088200ab0208a20200808828009f208a20008a280280009228a20a00a0080822008702208088288082200079a20808220828208a006d00a00a208282280200620a08208820028a000056208828808008a202004a08a28028020220a0003e88208282280208080031228800220a20a082002608028228800800a2001a8028208820a00a08000d800228a202088288000028208a20a08a0002 else (if i < 2 then 0x30728808200a20a000202fa8828228a00200a2002ec828208820a08a08802e0202202202088288202d40208a00808a2802802c7028a00208a20828202bc202208082288080202af0820a0822880822802a2a00a00a088282280029620808808020228a2028c0200828800208a20027ea08828028028820a027208a208282082208002660a288082202202080258228820228a00a00a024d08828020820208a002418820220a200088280236828208800a082200022928028a20a0820082021d8028220808a280080210220a20a002288082020328200a008288282201f78820a08a0082020801eba20208828028208001df20a08a28020008a001d30a00a2082802822001c5008a28808220a20a01ba08208828220800a001ad022882822882080801a1a08820228a000088019520028208a20a002201898008028a20a08820 else 0x48f8228028228a00a000482a20808228820a080047608820028a202088204680808208a20a08a28045c028028220a088208045020228200808a288004450020a202082280280438220800a00a288282042d08820a002088202204208a202088088282080413a20808a08028020a040620a00a208082282203fb0808828808220a0003eda08220828208a00a03e200228828028020a003d68a08800228a0020803ca828828008220208803bc28028020a20a08a203b1082022802080822803a6008220820a082088039a28208a00800a2802038f8228820200a088000381228a202088088282037600a20a08a200280003678a20808a20828228035c200808a20800220a034f00a08228828028a003440200a288082208200337a08a088202280202032a08028828208a20a0031e8a08020028a208080312a20028228020800a)) else (if i < 5 then (if i < 4 then 0x616a008088282288208060a08a08020228a202005ff0828008208820a0805f2828028008a20a00a05e620828208220008a205da8808220220a0820805cd820220a00a00a28805c128028820008a088205b60220a0020882082805aa208820a082280280059c28a20a08a008082205908220808a280082200583220a00028808228a057700a0082882022882056d0a08a00020208820055f208828828208220a055500a28020028a002005498a20828028220008053ba08808220a20a082052f288282288008002205228828228800a08a000517820228a200080280050b28008a20a00a280004fd8028a20a0882082804f1228220808820808204e400a20a082288202204d88200a00a2802022804cc800a08a08820008a04c020200828828200a204b40208a2802802882004a8a082008282202208049c08a08808220a2080 else 0x79f20208208820228a207940208808828200a200786808a28028028a208077c00a2080822820080076f8820808220a20a080763220828008a00a00a075628808228020a08a0074a8820228200208828073d828008a20208a280073120020a20a08a2002072582280208082288080719200a20a002088282070d28a00000a280282207028820a00a0880022006f3a20208828828208a06e820808a20028008a006da0a08a2082822822006cf808228800020a00a06c408228808028a002006b70a28828220020a0806ac8088202288202080069e28820208a20a08a006928028028820808a200686028208220800a288067a08220a2020802882066d8228a00a00a008280661200820a08a0882020656282200088288202006498a00a08a20028028063da202082208280202063020808a288082208206230a08228828228200) else (if i < 6 then 0x92a0a20208028828008091d820a08228008028a090f20a08a008282282209040808828008220a2008f7a00228800228a00a08eb00828028228820a008e08a00820208a2020008d2828828208220208a08c628020028a00a08a008bb0828020220008a2808ae808220a20808228808a228228800a002208208958228820a08208820088a028a200088280082087e08a20a00a280080208708220a088208282280865220808a20800200a085920a0822802822800084e0a00a288202088000841a00a08820028a202083408828828200a20a008288a08028020820a08081a220828228220808a080f08808220a008082208030028228a00a0022807f7808028820a08808807eb00228a202088208207de8208220a0882802807d1028220a08a20820207c628200808a280080207bb082020822882820007aca00a00a288282288 else 0xab0008a20208a2802800aa320820a08a20828200a9980208002288082200a8aa20208208828228a0a8000800a08028220820a740a00a08800228a200a67008828828208a00a0a5b08a20028008a20a00a4f82208280282208080a42a28800220a00a0820a3728828028200200820a298828220820a08a080a1e82022882020802800a1128208820a08a08020a068008a20800a2002809fa228220000a28808209ed20a20a080088282209e10a00a00a2082820809d4820808a08820228209ca00208820820208a009bd0a08228028028a2009b1208a20808220220809a508a28808220020a009988028828228a00a00098aa08820228820808a0980080202288202008209738808208a20a008280966028028a20208a208095a28208220808a0880094d8220220a082288200940228a00800a288280093528800208a0082022))) else (if i < 11 then (if i < 9 then (if i < 8 then 0xc3b20020a00a08a20820c2f8028220008a288080c22220a00a0822082820c1628800a00228828020c098820a08a088002280bfda2000882802820820bf120a00828008028a20be50a088208202282200bda808a20008200820a0bce08228828208200a00bc20a288202288002080bb5a08820028a2020880ba708828200a20a08a20b9c80280288208082200b90828228200808a0080b8408220a20808228020b778028a00a00a288080b6a228820a0880882020b5e28220208820828200b508a20a08a280200280b44220a08a2002022800b3900808a28808000a20b2e0200228828220a000b1f200a28828228820a0b1408208820220a20200b078808828208a208080af9a28028028a00a00a0aee20808228220808020ae28808020a20a082200ad5808208a00a00a2880ac828228020a08808820abc0228a00208828820 else 0xdc10808228220808a280db7800220200a0802880daa28028a00200a28820d9f0220820a08a080200d9222882020802882820d8608a20a00a08028020d798a20008a200282280d6d220800a08808220a0d5f20a08028828228a00d550800a208282088000d48a08a0082022822020d3e08028820008a00a00d318a28008028a202080d24a2082822022080880d1728808220820a08220d0a8820228a00a00a080cfe028228820808a0800cf320208a20200828800ce68208a202088280280cd8028a20a08a0082820ccc00220808a28808220cc002208082288202280cb3a00a00a2082802880ca820208208820020a20c9d02088288082088200c8fa08228028028220a0c8408800828228220800c788a28000220a20a000c6d228008228800a0080c6028828208820a00a00c540820208a202088280c47828208220a08a080) else (if i < 10 then 0xf4da20808200a20a0020f4028828228200200a20f338820228800a08a080f27820020a2020882880f1a28200a20808a28020f0e8028800a082208280f0322822080820880800ef720a20808228008220ee98a00a00a288082280edc020a08808820228a0ed020208820820208a20ec40a08a280280280200eb8a08a2082020820080ead00a28808020a20200ea08228828220a00a000e92a08828220820a0820e8708820228a20008800e7a8828208a00808a200e6e028028a20a0022080e6308028220808828800e558220a20a082208280e49208200a0082882820e3c28020a08a08820220e318a002088280280080e25820208a28028000a0e1820a00a20828228020e0d0008228808220a200e00a08208828220a0080df400a28028228820800de90a08800228a002080ddb820828208a20a0820dce20028008a20a08a2 else 0x10d408028828228a00a010c70a20828208820a0810bc208820028220208810af28800208a00a08a210a480280282202088201096828220220808a288108b00220820a0822802107e8228800a00a088281074208820800a080202106828a2020082880820105c8a20a08808028020104da20a08a208282082104120808a288082202010350a08220820228a001028a002288280288202101d08a08800220a202010108828828208020a081002028028028a20a08a0ff600820228220808a20feb8008220820a002280fdf808208a00a0082880fd228228820208a00820fc60208a202088088280fbb200220a08a2802000fae28a00808a20828020fa48200008a208082200f95a20a0822882802880f8900a00228808228820f7c0a08a088202282200f6f008828028208a20a0f6400a28000028a20a00f598820028228020808)) else (if i < 13 then (if i < 12 then 0x125e0a008288082288201250a08808820228a202124508820028208820a012398a28028008220a00122da20820228200008a122228808020a202082012148828220a00a00a281207828228820808208811fc20228a002088008211ef8208a2080822802811e2028a20a00a20808211d5282208088288082211ca0220a0802082820811bda00a00a28820228011b120a08a080202288011a50208828828008a201199200a28028020a202118d08a208282280208011808208808220a20a081173208828228a00800a116728028228800a00a0115c0800228a20208028114f828008a20a08a200114208008a20a08a208211368228220808828800112a220a00a082288200111d28a00200a280282211110820a08a088202081105820200028828208a10f820208a08028028a210ee0808a0002822022010e1800a28808220a208 else 0x13e5820008a08020228a13db20200808808200a213ce0a08828028028a2013c2808a20828208200813b608a20808220220a013aa8228820028a00a00139ca28808028820208a1391088202202202088213838828208820a082281378020028a20a08a000136c28228020808a280013608200a20a002288081353228a002008288282134728820a08a0082020133a0a20208828828208132d220808a28020028a132000a08a208280282213160008228808020a201308a08228808228800a12fc00228828228020a012f08808820228a2000812e3828020208a20a00a12d728008028820a088212cc0828208220800a2012c0808200a20208228812b328228200a00a088212a80220800a08a08820129b028a200088288282129000a00a08a200280212838820a082208280281276220808a08808220a126a2080822802822820) else (if i < 14 then 0x157228a202080088280015658a20808a280080281557a20a00a208082282154a20808828808220a2153f0a08220820208a001531a00a28028228020a152608a08820208a0020151a0828828008a20208150ba28028020a20a08a1501008282200208082214f58808220a2080820814e9828228a00800a20014dd28228820a002088014d10028a2020882880814c4208a20a08a20028014b708220a088208282214ab8220808a28800220149ea00a082280280288149300200a288282008214870a00a088202288201479208028828208a20a146e08a08028020a208014628a200282282208001455a28808220a00a080144820828228a00a0022143c0828008820a08a0814308002282202088288142520208200a088280214188028a20208a20820140c220220808a28008213ff20820a082288282013f18a00a00a08828228 else 0x167f0000000000002000167028828228820a08a016638820228a200088281657028208820a00a280164c08008a20a008208216408228220008a208081633200a20a082088282162720200a00a2882022161c8800808a088200281610a00208820828200a160320a082280280288215f70a0822080822822015eb808a08808220220815df08028028228a00a015d20a28800228820a0815c7808020228820208815b920828208a20a00a215ad8028028220208a2015a1820228200808a088159508020a202082288215888220a00800a28828157d228800a082008202))))
+private def withinPeriod (n : ℕ) : ℕ :=
+  let word := (packet (n/2048) >>> (80*((n%2048)/64)))%(2^80)
+  (word >>> 64)+pop (word%(2^(n%64+1)))
+
+def wheel (n : ℕ) : ℕ := (n/30030)*5760+withinPeriod (n%30030)
+private def check (r : ℕ) : Bool :=
+  wheel (r+1) == wheel r + (if cop (r+1) then 1 else 0)
+
+private def valid (lo len : ℕ) : Prop := (List.range' lo len).all check=true
+private theorem glue {lo a b : ℕ} (u : valid lo a) (v : valid (lo+a) b) : valid lo (a+b) := by
+  unfold valid at *
+  rw [← List.range'_append_1,List.all_append,u,v]
+  rfl
+
+private theorem halve (lo n : ℕ) (h : valid lo (n/2))
+    (k : valid (lo+n/2) (n-n/2)) : valid lo n := by
+  simpa only [show n/2+(n-n/2)=n by omega] using glue h k
+private def covered (lo hi : ℕ) : Prop := ∀ j, lo≤j → j < hi → check j=true
+private theorem checked {lo hi : ℕ} (h : valid lo (hi-lo)) : covered lo hi := by
+  intro j lower upper
+  exact List.all_eq_true.mp h j (List.mem_range'_1.mpr ⟨lower,by omega⟩)
+private theorem joinCoverage {lo mid hi : ℕ} (l : covered lo mid) (r : covered mid hi) :
+    covered lo hi := by
+  intro j lower upper
+  by_cases h : j < mid
+  · exact l j lower h
+  · exact r j (by omega) upper
+
+private theorem c0 : covered 0 938 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem c938 : covered 938 1876 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem c1876 : covered 1876 2814 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem c2814 : covered 2814 3753 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem c3753 : covered 3753 4691 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem c4691 : covered 4691 5630 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem c5630 : covered 5630 6568 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem c6568 : covered 6568 7507 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem c7507 : covered 7507 8445 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem c8445 : covered 8445 9384 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem c9384 : covered 9384 10322 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem c10322 : covered 10322 11261 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem c11261 : covered 11261 12199 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem c12199 : covered 12199 13138 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem c13138 : covered 13138 14076 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem c14076 : covered 14076 15015 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem c15015 : covered 15015 15953 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem c15953 : covered 15953 16891 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem c16891 : covered 16891 17829 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem c17829 : covered 17829 18768 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem c18768 : covered 18768 19706 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem c19706 : covered 19706 20645 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem c20645 : covered 20645 21583 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem c21583 : covered 21583 22522 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem c22522 : covered 22522 23460 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem c23460 : covered 23460 24399 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem c24399 : covered 24399 25337 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem c25337 : covered 25337 26276 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem c26276 : covered 26276 27214 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem c27214 : covered 27214 28153 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem c28153 : covered 28153 29091 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem c29091 : covered 29091 30030 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+set_option maxRecDepth 16000 in
+private theorem allrows : covered 0 30030 := (joinCoverage (joinCoverage (joinCoverage (joinCoverage (joinCoverage c0 c938) (joinCoverage c1876 c2814)) (joinCoverage (joinCoverage c3753 c4691) (joinCoverage c5630 c6568))) (joinCoverage (joinCoverage (joinCoverage c7507 c8445) (joinCoverage c9384 c10322)) (joinCoverage (joinCoverage c11261 c12199) (joinCoverage c13138 c14076)))) (joinCoverage (joinCoverage (joinCoverage (joinCoverage c15015 c15953) (joinCoverage c16891 c17829)) (joinCoverage (joinCoverage c18768 c19706) (joinCoverage c20645 c21583))) (joinCoverage (joinCoverage (joinCoverage c22522 c23460) (joinCoverage c24399 c25337)) (joinCoverage (joinCoverage c26276 c27214) (joinCoverage c28153 c29091)))))
+
+private theorem wheel_shift (q r : ℕ) : wheel (30030*q+r)=q*5760+wheel r := by
+  simp [wheel,Nat.mul_add_div (by decide : 0<30030),Nat.add_mul,Nat.add_assoc]
+
+private theorem cop_shift (q r : ℕ) : cop (30030*q+r)=cop r := by
+  have m2 : (30030*q+r)%2 = r%2 := by rw [show 30030*q=2*(15015*q) by ring,Nat.mul_add_mod]
+  have m3 : (30030*q+r)%3 = r%3 := by rw [show 30030*q=3*(10010*q) by ring,Nat.mul_add_mod]
+  have m5 : (30030*q+r)%5 = r%5 := by rw [show 30030*q=5*(6006*q) by ring,Nat.mul_add_mod]
+  have m7 : (30030*q+r)%7 = r%7 := by rw [show 30030*q=7*(4290*q) by ring,Nat.mul_add_mod]
+  have m11 : (30030*q+r)%11 = r%11 := by rw [show 30030*q=11*(2730*q) by ring,Nat.mul_add_mod]
+  have m13 : (30030*q+r)%13 = r%13 := by rw [show 30030*q=13*(2310*q) by ring,Nat.mul_add_mod]
+  simp only [cop,m2,m3,m5,m7,m11,m13]
+
+theorem wheel_succ (t : ℕ) :
+    wheel (t+1)=wheel t+(if cop (t+1) then 1 else 0) := by
+  let r := t%30030
+  let q := t/30030
+  have split : t=30030*q+r := (Nat.div_add_mod t 30030).symm
+  have item := allrows r (Nat.zero_le _) (Nat.mod_lt t (by decide))
+  have step : wheel (r+1)=wheel r+(if cop (r+1) then 1 else 0) := beq_iff_eq.mp item
+  rw [split,Nat.add_assoc,wheel_shift,wheel_shift,cop_shift,step,Nat.add_assoc]
+
+private theorem cop_iff (n : ℕ) : cop n=true ↔ ∀ p ∈ Nat.primesLE 13, ¬ p ∣ n := by
+  have ps : Nat.primesLE 13 = ({2,3,5,7,11,13} : Finset ℕ) := by decide +kernel
+  rw [ps]
+  simp [cop,Nat.dvd_iff_mod_eq_zero]
+
+theorem count_rough (t : ℕ) :
+    ((Icc 1 t).filter (fun n => ∀ p ∈ Nat.primesLE 13, ¬ p ∣ n)).card = wheel t := by
+  induction t with
+  | zero => decide +kernel
+  | succ n ih =>
+    have interval : Icc 1 (n+1) = insert (n+1) (Icc 1 n) := by
+      ext k
+      simp only [mem_Icc,mem_insert]
+      omega
+    have fresh : n+1 ∉ Icc 1 n := by simp
+    rw [interval,Finset.filter_insert,wheel_succ,←ih]
+    by_cases hp : ∀ p ∈ Nat.primesLE 13, ¬p ∣ n+1
+    · rw [if_pos hp,(cop_iff _).mpr hp]
+      exact Finset.card_insert_of_notMem (fun mem => fresh (Finset.mem_filter.mp mem).1)
+    · have no : cop (n+1)=false := Bool.eq_false_iff.mpr (mt (cop_iff _).mp hp)
+      rw [if_neg hp,no]
+      simp
+
+end ShortPeriod30030
+
+
+namespace ShortPeriod510510
+
+open Finset
+
+def cop (n : ℕ) : Bool := decide (n%2≠0 ∧ n%3≠0 ∧ n%5≠0 ∧ n%7≠0 ∧ n%11≠0 ∧ n%13≠0 ∧ n%17≠0)
+
+private def pop (x : ℕ) : ℕ :=
+  let a := x - ((x >>> 1) &&& 0x5555555555555555)
+  let b := (a &&& 0x3333333333333333) + ((a >>> 2) &&& 0x3333333333333333)
+  let c := (b+(b >>> 4)) &&& 0x0f0f0f0f0f0f0f0f
+  ((c*0x0101010101010101) >>> 56)%256
+
+private def packet (i : ℕ) : ℕ := (if i < 24 then (if i < 12 then (if i < 6 then (if i < 3 then (if i < 1 then 0xe99ffffffefbfff7fffc47bffffbf7ffff7ffb6a7dfffffffeffffdfe98bffff7fffeffffefcb5feffffefffffffff87bbeffefdffffffffef1effffefff7ffffbeda5ffeffffffeffffffad3ffefffbefff7ffff4bbf7ffffbffdfbffde78efffffffefbfffffcb4ffdffffffbff7fff8f3f7dffffbffdffffb0f3ffff7fffefeffffe003ffbfbfffffffbffbc3ff7fffffeffffdff70defbffefffffffffed2feffdffffdfbffbfd87ffefeffffbffffdfad2fff7fffffffbefff52dfdfff7dfff7ffffe967fffdfffffffff7dd0efff7efffffffefbf9e0ffdffffdfff7ffff3497fffefdfffffffde59f7ffff7fefffffffc967ffefffbf7ff7eff8f0effffffdffffdffe169ffffbfbffbffff7e1e6ffffbffffdffdfbc1effbffff7dffffbff800befffffffffffffd else (if i < 2 then 0x789e97fffffdf7ffffbffbc3fffff7bffffbffeff69bffdffffbfffefffe97fffdffefbffffdffcb5fffffbfffffefffb87bfffdfbffeffffffaf0fffffffeffffefdfda4feffffff7fffefffad3fdffef7ffdffffef4b7ffffeffefffff7ee77fffffffefbffffffcb3df7ffefdffffffff8f2f7fffefffdefffbf0f7fff7fffdfbffffbe007ffdffffbffeffffbc4bfffffefffff7ffb70fdffefffffefffffed2bfeffffffdffdfffd877bfbffff7ffffdffad1bdffdfffffffffff52ddffef7ffdfbffffe96bffbefffffffefbfd0ffbf7ffbffffbf7ff9e2ffffefdfffffffbf34bffffdffffdffbffe5a3ffefff7ffffbfffc96ffbffdffffdfdfff0f0fffffdffffdffeff169ffdfbffdffffbffe1dfffdffffdfff7fffc1dbffffddffffeffff8007ffef7fffffffbef else 0xf10e97fffefbfff7bffeffc3fffdffffffbffdeff697efffffffffdfbffe96ffbffbeffffeffffcb3ffff7ffffffffbf7873feffffdffffffbfef0fff7ffdffffbefff5a4ffffdfdfffefffffad3fff7dffeffffdf7f4b7ffffff7dfffbeffe787ffffdf7fffffffdcb4efffdffff7fffffd8efffffdfffdfffbfff0eff7ffff7effffbffe003fbffffbffdffff7bc4fffff7ffdfbffffb70fffdfffffbffffefed33dffffefbffbffff987ffffffdffffdffefad3bfffffffbefffff752fff7efffbdffffffe96fdffffffffefbffed0f7bffdffffffbffff9e27ff7bffdffffffff34dfbf7ffffbffdfffe5a3fffff7fffefffffc9777ffdf7ff7efff7f8f0ffffdffffbffffff169fbfffefffff7effe1e3ffffff7ffdefffbc1efffdf7ffff7ffdfd800ffdf7ffffffffdff)) else (if i < 4 then 0x1696e97fffdfffbf7ffffffc3ff7bfffffffdfbfff69bffffbffff7effffe97fffbfbffffbff7ffcb5ffffffffbffdefff87b7efff7fffffdfffef1f7ffbffffbfbffbfda7ffdfeffffdffffdfad7fff7ffbffffdefff4bbfdffefffff7ffffe78ffffdefffffffffbcb6ffdfbffdffffbeff8f5ffeffefdffefffff0f9ffffbffffff7ff7e015ffffdffeffffeffbc7fffdfffbefff7dff713fffffffffffeffeed33fffefffffffffbf9887fffeffffefff7dfad3feffffdf7fffffff52dfefffdf7fffffffe96f7fffffffdf7ffdf90ffffbffffbeffffbf9e2fdffff7ffff7ffff34dfdffffbffbf7fffe5ab7ff7ffffbfffffbc977fdfbffdffffbfff8f0ffdffffeffffffff169fbffdffffdf7fffe1e1fffffffefbffdffc1effbf7fffdffdfdff800ffbfffffffbeffff else (if i < 5 then 0x1e1ee99f7dffffdffefffffc42fbfffffffbffff7f69fffdffffffbffffbe97fefdffffdffeffffcb7dfffffefff7ffffb87bdfff7ffffffffffaf17ffbffff7f7ff7ffda6fdfbfffeffffefffad3bffffffffef7ffff4b37fffefffdffffffe787fdfbfffffffefdfcb5fdf7ffbffffbf7ff8f1fbffff7fffffffdf0f3fff7efffffffefddffffff7ff7ffffbfffbc4ffbffdfbffbfbfff70ffffffdffffdffefed33ffbf7ffbffffdfbd87ffffffffefff7dffad3efffffeffffefff752fbffff7fffffffdde96bffffffefffff7efd0ffdffffbf7fffbffd9e4efffbffffdffff7e34fffffefff7f7ffffe5abfbffffdffffffbfc977ff7ff7efffbffff8f3fbffffdffbffffbe16dfffffffdfdffffbe1e3fff7fffffffbfffc1f3f7ffff7ffbefff7800dfffffffefffffff else 0x25a6e97dfffbefffffffffdc3fffffbffdefff7fff69ffbfffefeffffdffe97dfffffefffbffffbcb7fffffbffff7ffdfb877ffbfffffdffffffef07dffffdffff7ffffda57dffffeffffefff7ad37ffdfffffeffffef4b7ff7dfff7effffffe78fbf7ffffffefdfffcb6fbffbffff7dffffe8f3fff7efffffffefff0f3fbfffffeffeffffdff7fbfffffffbfffffbc4dffefdffdfbffeff70dfffdffffffff7ffed27f7dffefffffffffd877f7fffeffefdfff7ad2fffefbffff7ff7ff52dffbeffffffff7dfe96bfffff7dfff7ffff90ffffff7dffff7ffef1e3fffbffff7ffff7ef34dfffbffff7ffffbfe5a7bffffbfffffffff4977dffefbffdfffffd8f1ffff7ffbffffff7f169f7fffffeffffdffe1e7fbffdf7ffbffffdc1f7ffffefff7efff7e800fffffffbefffffff))) else (if i < 9 then (if i < 7 then 0x2d2de97fff7dffdffffffdfc3bfff7ffdfffefffff69dffffbfbffff7ffbe97effffeffeffffdffcb5fffdfff7dfffffff877bfffffdfffff7ffef0ffffefdffeffffefda6dfffeffffefffbefad5feffffdf7ffff7ff4b9fdffffdfffffffee797ffffffffbdffefdcb5ffeffffeffffff7f8f3f7bffefffffffffb0f7efffff7ffdf7fffdffffff7ffff7ffffffbc4ffdfbffbefff7fff70fffdffffdfffffffcd2fefff7ffff7effffd877fffffffdf7ffbffad3fefdffffdffefdff52ddf7ffffffffefffe96bfffdf7ffeffffbfd0f7ffddffffdffff7f9e2fdffffdfffefefff34ffeffefdffffdffde5abfffbfffffdfff7fc96ffffbfff7fffff7f8f1ffefff7ffff7efff168ffffdffffffbfffe1e2fff7bfffffffbffc1efffefff7dfffbeff800ffffff7bfffffffb else (if i < 8 then 0x34b4e99fbfbffbffff7dfffc47f7ff7dfff7ffff7f6afffdffffffbffdfbe97ffffffefffffbfffcb7ffbffffbffdf7fff87bfffffdffffdffdfef17ffeffffbfffeff7da5fffdffffdffff7ffad3bfffefdffffeffff4b7bffefbfffffffdfe78fffffffef7ffefefcb4ffffffdeffffdfff8f0fdffeffffeffffff0f37ffffffefdffffedff7fdffffffffffeffbc3efdffefdffefffff70deffffefffbfffffed2f7feffffefdffffbd877ffffff7efff7fffad4f7dffff7ff7efffd52dffffffffef7ffffe96bfffdfffbefffbffd0ffeffffffdffdf7ff1e2fffff7fffefeffff34dbffbf7ffff7ffffe5abffbfffffbffefbfc967bffff7fffffffff8f0f7ffbffffbf7ffff169ffdfdfffefffff7e1e7f7dfffbffff7bffc1efffffdfbfffbdfff800fffffbffffffff7e else 0x3c3be9bf7ffbffffdf7fffbc43ffff7ffeffffdfff69ffbf7ffffffffdffe96ffbffbffffbfffffcb9bffdfdffdfbffdff87ffffeffffefff7ffef1fffbffdffffdfbffda8fdfffff7ff7dffefad9fffdffffffbffbef4bffffdfffffffef7fe797fffffbffff7efffcb67ffff7efffffffbf8f4ffefffff7fffffdf0fbfffbffdfbffff7fe0177ffffbfffffdffebc6ffffbfbffefffffe715ffffdffdffffbf7ed37fffffdfbffffbffd88ff7fff7fffdffffbad6bffffdffff7ffdf7531ffffffefdffffffe977ff7ffdf7ffbffff9107dfffffffdfbffff9e4fffdffff7f7fffef351fefdffffbffbfffe5b3ffffffefff7bffdc97fbfffffffff7fffe8f3ffeffffefdffdfff16dfdfdffffffffeffe1e7fbffeffffff7fffc1ef7ff7ffffbdfffff800ffefbfffffffdfff)) else (if i < 10 then 0x43c3e99ffdffffdefffff7fc3bffbffffffff7ffff695f7ffff7feffffffe96bffdffffdfffffefcb5ff7f7ffff7ffdfff877fefffffbffdffffef0efbffbffff7fffffda5effffdffdfbfffffad5fefbffffdffefdff4bbef7fffffffdefffe797fffdf7ffdffff7fcb6ffffdffffdffefbf8f5fbffffdffffbfbff0f7fdfffffffffdffee007fffbfffffffff7dbc4ffdfbffdfffffeff711ffdffeffffeffffad2ffffffeffffeffff9887ffdf7ffdffffdefad5fffdffefefffbf7f531fffffbf7fffffffa977dffffeffeffffef5107ffff7ffdffffbff9e3feffffbffffff7ff34f7effffefffffffee5b3fffffbffdfbffdec96fff7ffffffffffff8f1f7ffffbf7ffbffff16bfdffff7fffefff7e1e5ffffffff7bffffbc1dffdffffdffffffff800efdfffffffdfbffd else (if i < 11 then 0x4b4be97fbffffbeffffefffc3df7ffbfffffffff7f69effffdffdfbfffffe96ffbffffbfffffeffcb7f7dffdfbffdfffff877ffffff7fffffff7ef05fffffffdfbfffffda4fffdffefbffdffffad3beffffffff7f7ffd4afdfffffffff7ffffe787ff7dfffbf7ff7ffcb4ff7dffff7ffdffff8f17ffffbfffdfeffff0f7dffdf7ffffbff7fe007ff7fffff7ffefffbc3fbffff7fffffdfff70ffbfffffff7f7ffded2fffefeffffdffffdd87ffef7ffbffff7fffad3ffbff7efffff7fff52fffffbdfffffffef696bffdf7fffffffdffd0f7ffbffefbffeffff9e2fffff7f7ffff7ffb34ddffffbffeffffefe5a7ffffffffeffefdfc95fdfffffeffffffff8f07fffefbffdffffdf1697fffeffffffff7de1dffbffffff7ffff7fc1e77dfff7effffffff000fdfffffffbefffbf else 0x52d2e9bffffdf7fffefff7fc41fffffffeffffffbf6a7ffefff7dffffdffe98dffffefffffefffbcb9effefefffffffff787ffffefff7ffffff7ef17efffff7efffffffda5fffffbefffbfffffad7dffffdffdfbffdf74b7ffffffefbffffffe78fbffffdf7ffbffffcb67fffffdffef7ffbf8f5fffbffff7effffef0f3fdfbfffffffffffe007bfffffeffffdffebc2ffffdfffffefffff70efff7fffefbffdffed2ff7fbfffdffffeffd87ff7ffdffffbeffffad3ffff7efffdf7ffff52dffefffffffffbefe967fbf7ffffffffbffd0f7f7ffdefff7ffff79e2fffdfbfffffffbfb349ffff7ffbfffffffe5a7ff7ffbeffffdfff4967ffffefffff7ff7f8f1fff7effeffffdfef16bffeffffefffbf7fe1eb7ffff7bffffdffdc1ef7ffefffffffffbf800ffffffffefffbf7f)))) else (if i < 18 then (if i < 15 then (if i < 13 then 0x5a5be99fff7dffffbffefdfc3ffbffffbffff7ffff69ffdffefdffffbfffe97ffff7fffffefff7ecb7ffdfbffeffffff7f87bfffffeffffefbffef07fffffeffffdffffda57ffdffffdffffdf7ad3fffdffeffffdfbff4affffffbf7fffffffe7877ffefdfff7ffff7cb47fffffffbefffbff8f1ff7fffefbffffdff0efff7ffff7ff7ffffdffffffff7ffdf7ffdfbc37ff7fffffdffff7f70ff7fffffeffeffffcd2bfbfffefffff7fffd875ffefffff7fffffead1ffbffffbefffffff52defbfffffffdf7ffa96befffbffffbeffffd0f7ffdfbffdffff7ff9e1ffffffffdffdf7ff349fefff7ffffbffffe5a37ffdffffdfbffffc95ffffeffffdffefff8effdffffdffff7f7ff167fdffffdfffbfffde1dffffbdffffeffffdc1dfff7bfffffffdf7f800ffffffbefffbf7fe else (if i < 14 then 0x61e2e97fbfffffdfff7bfffc39fffffffff7f7ffff695ffffbffffdfff7fe95ffefffffffffdfbfcb3f7dffeffffff7fff87befffbffff7dffefef07ffffdffffbfffffda5ff7effeffffefbffad5ffbffbf7ffbf7fff4bbfffefdfffffffef678ffffffff7ffffddfcb3fffdfffffffeffff8f1dffff7f7fffeffdf0f3bffff7ffbffff7fe007fffbffdfdffffbfbc2fdfffffffffff7ff70effffefdffeffffded2fffffeffffdffefdd877ffffffbeffffeffad2fbefffbffffffffe52df7fffffff7efffbe969ffdffffffbffff7d0efffbffefffff7fff9e0dfbfffffffdfffff349efff7ffff7fffff65a7ff7effefeffefffc967ffbffff7ffbffff8f07fffefffff7dffff16b7ffff7ffdf7ffefe1ebfefbffffdffefdfc1efffbfffffffbdfff800ffffdffffff7ffdf else 0x6969e997bffff7ffdfbffdfc3ffffbfffefeffffff69ffdfbffffdffbfffe96fffffffbffdffffdcb5efffbfffffdffffd87bffdffffdfdffeffef17efeffffdffffdffda6defffbffffdfffffad5dffdf7ffefffffff4b7ffddfffffffff7fe78fefbfffffffdefffcb6fdffefbffefffff78f7fff7fbffff7ff7ef0fbfffbffeffffefffe01fff7ffff7ffbefff3c4ffffffffffffff7f711ffefdfffffffdfbed33ffefffff7ffbeffd87effffffbfffffffdad3efffdf7ffffffffd52ffffffffdfbffdfbe96ff7fffefdffffbffd0f6fffffffffbffffb9e2effffeffdffffffb34bff7ffffbfffffdfe5a7dfbffeffffeffffc967dfffff7fffffff78f0dffeffffdffffff7169fffefff7dffefffe1e77dffffbffbfbfffc1e77fffffffef7ffff800fff7bffeffffdfff)) else (if i < 16 then 0x70efe9dffffffff7dffefffc47fdffffffbffffbff6a6fbffffdffffffffe987fffff7ffdffffbfcb7fffbfffffdffffbf87ffdffff7effeffffef25fdfffefffff7ffeda7fffeffffef7fffffad5fffefffef7ffffff4bbdf7fffffffdfbffe795f7ff7fffffeffffcb6dffef7fffffffbff8f7fefdffff7ffdfbff0fbfefff7ffff7ffffe017bffdf7fffefffffbc5ffff7ffffbffbfff715fbf7ffbffffdfdfed3bffffffbffefbfff5897ffffefffff7ffbf2d5fffbdfffffffefff531ffffff7ffff7f7fe97b7fffefdffff7ff7910fffdfffffffff7ef9e4fffdffefdfffffff34fbffffdffffffbffe5b3effefbffeffffff897fffff7fffffffbef8f2fdffffdfdfffffff16dfeffffdffeffffbe1f2ffffefffbf7ffbec1e7fffffffffffffff800f7bfff7f7fffffff else (if i < 17 then 0x787ae91ffffffefbffdffffc37dffff7effffdffef67ffffffbffbffffffe94ffff7ffbefffbfbfcaff7ffffff7fffdfff86dffffdffff7ffff7eefdffffbffff7fffefda3ffbffff7bffffdffacfbffffdf7fffffffb4abefffffffefdffffe77bffdffffbdffffefcb3fefdfff7fffdffff8ef7ffffff7ffbeffff0ebdfffffffdffffff5ff7ffbeffefbffffffbc0fff7fffffff7ffff7077fffeffffffdfffed237ffff7ffbefffbfd85fff7dffffbffffffacffbefffffffefbfff529ffffbefffbfbffbe967fff7bffff7ffefbd0e7fbffffbfffffeff9e0ffdffff7ffffbffd347ffffdfffffdffefe5a1ffefdffdfffffefc95fffbffdffffffdff8efbffffbeffffdffff167fffdf7ffbffffdfe1e3fffeffefdffefdfc1dffffffbeffffffff000fbffef7ffeffffef else 0x7fffe99fdfff7fffeffffefc47fff7fbffff7fefdf6a7fffdffdffffbfffe99ffdffefdfff7fffdcb5fffffffffff7ffff87fffdfdffeffffefdef1fffeffffefffbeffda7fffffdf7fffefff7ad5dffffffffffffefb4bbfffffffbefff7efe78feffffeffffff7ffcb4fdfffbffffffffef8f1bfffffffdf7ffff70ebfefffffbfffffffdfffbfbff7effefffffbc3fbffffbffdffffbf710fff7ffff7effffbed2fffffffbf7ffdfffd886fdffffeffefbfffad3f7fffffffdefffff52dfff7ffff7fffdffe96bfdeffffdffff7ffd0f3ffffdffff7f7fff9e3effefeffffdffeff34fffbfffffefff7f7e5abffdfff7ffffefffc977f7ffbffffbeffff8f1fffbffffff7ffff7169ffbffffffffdfbfe1e7ff7ffdf7ffbefffc1e7fffefbfffffffff000fffbf7ffbfffffef))) else (if i < 21 then (if i < 19 then 0x8787e997ffbdfff7ffffdffc47fdfdffffbffdfbff69fffffefffff7ffffe98fbffffbffdf7ffdfcb5ffffdfffffffefff87ffdf7feffffefeffef1ffbffffdffff7ffbda7fffffdffffdfff7bad5ffdfbfffffffefff4bbffffff7dfff7f7fe797ffffbeffffefffbcb6efffffffeffffdfb8f1ffffffeffffffeff0efdfffffffffff7ff6007dffefdfff7ffffebc4ffffefff7ffffbf770ffeffffdffffffbfed33ff7ff7efff7ffff588f7fffeffefdfffbfad3fffffffef7ffffff52fffbfff7fffeffffc973efffff7ffbefff7d107fff7fffeff7fffb9e3fffefffff7ffbfff34dfbfffffffff7effe5a6fbffdffffffffffc96bffbffffdfbfffff8f0fffeffffdffffbff16bbf7ffbffffbdfffe1e7fffbfbffefbffffc1e7fffdffffffff7df800fffbffbffffdf7ff else (if i < 20 then 0x8f0ee99ff7bffeffffdffffc43beffffdffffdffff6a7dffeffffbffffff698fff7effffdffefffcb7ffdffffeffefffff87ffbffeffffefefffef26fffff7ffbefff7fda8ffeffffffdffbf7fad7fbefffffffefffff4c3ffff7bffefdfffbe7a7fff7efffffffdf7cb6ff7ffffffffffbff8f5ff7ff7dfffffffef0f7fffeffffff7ffdfe00ffefdfff7fffffefbc4fffbfffffffdfbff70f7ffff7effffffffed337ffeffff7ffff7bd887fffdffffdfff7bfad1fffffffdffffffff52efbffefdffbffffde96effffdffefdfffffd0fffdffff7f7ffff7f9e3f7dffffeffefffff350ffffff7ffbfffefc5abffffffffeffffefc977effffefdfff7fff8f2dfbfffffffff7ffd16bbffefffffffffffc1e7ffbefffbeffffffc1e7f7dfffffffdffff800dfbfffffffbeffff else 0x9696e99fdfffbffffbffff7c43fffffdffdfbffff769fff7fffefffffeffe96f7effffdffffffffcb5f7ffffbffdffffef877fff7fffdffffffdef07fff7ffdf7ffffffda5dfbffffbffffbffead1effffffffbdfffff4b7ffdf7ffdfbff7ffe78fffbffffbffefbffcb47ffffbffffff7fff8f1dffeffffffdffeff0f3ffdfffffdffefdfe007dfdffdffffff7ffbc3fdffefffffffffdf70dfffdeffffefffffed2ffefbfff7fffefbfd887feffefefff7efffad4ffffbf7fffffff7e52fffffbffeffffdffe96ffff7ffbeffeffffd0feffffdffffffbffb9e2dffffdffffffff7f34dffff7ffefbffbffe5a3f7fffffdfffffffc965ffffdf7ffbfffff8f1effff7ffff7ffbef169ff7ffff7bffffffe1e3dffffefbfffffff81e7dfffffffdfbffef800bffbfffffeffffdf)) else (if i < 22 then 0x9e1ee9b7ffdffffdffffbfbc43ffffffdfbffffdff69fbffffdfffffefffe987effefdffdffffffcb9fffff7ff7fffefef87fffffffdfbfffeffef27feffefdfff7fffeda8f7fffffff7effffead3ffffffffefffffff4b7f7ffffbefff7fffe796fdffff7ffdffff7cb6ffff7fffdfdffffd8f5ffbf7fffefff7fff0ffeffffffbffdfbffa00fffff7fffffdffffbc4efffffffdfbfffff711ff7effffdffffdfed33f7fffdfffefdfffd887bffbf7ffff7ffffad3fff7dfffffffffbf52ffdf7ffdffffdfffe96bffffefbffefffffd0fffff7effffefff7e9e1ffffdffdffffffff34dfffffefbffdfbffa5a7fffffeffffefff7c977ffdfbffbffff7f78f0fffbfffffffffbff16bbffffdf7ffffbff61e3fffefbffffffff7c1e5fffffffbefffdff800ff7ffffbbffffdff else (if i < 23 then 0xa5a6e9bfffffff7fffefbffc47ff7ff7fffffdffef6affffdffffff7ffbf698ffefefffffffff7fcb9fff7ffbffffdf7ff87b7ffff7fffffffffef1f7ffdf7ffdfffffdda8ffffbffbf7ffdf7fad5ffffffbdffffffff4baffffeffffdffffbe79effffbffef7ffdffcb7ffbffffbfbfffeff8f3ffdfffffffdfffff0f1ffffffffffefff7e003ffefffffeffffefbc4fdffffdf7ffbffff70fff7ffff7fffefffed33bffdffffbeffffed887fefdffefdffffffad3fbfffffffff7bfff52dfdfffffffdf7fffe96afffbffff7ffffbfd0f7fdfdfffffff7f7f9e0ffefff7fffffffff34df7ffbf7ffdefffbe5a3fffffffffbffbffc96ffbfbffbfffefeff8f1ff7ffff7ffbf7fff16dffff7bffffbffefa1e7ffefffffffffdefc1e7fffffffbffefbff800bffff7dffffbffff else 0xad30e93bffffffffdffffffc337ffbf7ffffffffff687ff7fffffefffbefe94fbefffbffffff7ffcafffffffffff7efff7867fffffdffffffffeeef7fefbffeffffefbfda2ffefffbffffbefffacbffffff7ffffffefb4abffdfdffdffffefbe777ffdfffbefffbfffcb2effffbf7ffffbfff8eddffffefff7ffff7f0ebffff7ffbffffbefdff7effffffbfffefff3c1ffffffdfff7fffdf70d7fffefffff7ffdded27fdffffeffffffefd86fbefffbf7fffffffad27bfffffffdefffdf52affffffffdf7ffffe967fdf7ffbffffbfffd0effeffffdffdfbfff9e1efffbffffdfffffd349fffffffdfbffeffe59bffdffffffff7fffc95dfbff7ffff7effff8efbffffdfff7fffbff165fffdffffeffffbfe1dbefbfffffffdfbffc1dfffff7efffbf7fef800fffbf7ffff7ffbf7))))) else (if i < 36 then (if i < 30 then (if i < 27 then (if i < 25 then 0xb4b7e8fffffffffff7ffff7c2fff7dffffefff7fff677f7ffffffffbfbffe927efff7fffffdffffcadbffdffffff7ff7ff867fefbffff7ffffffeef77efff7ffff7efffda3fbff7efffbf7ffffacfffefdfffffffefbf4abfeffffbffffdfffe777feffff7ffdffffecb3ffffbf7ffff7fefd8ebffff7fffffffdfff0e3ffbffefdfffffffdfe5fffffdffffefffbbc0fffefdffdffffbff709fffeffffefff7dfed1ffffff7dffffffff9867dfffbdfffffffef2d0ffffffff7efffbef527fbffffffbffffdfe963ddfff7ffffbffff50dfdffff7ffdffffff9df7ffbfffeffffffbf347fbeffffefff7fffe59ff7ffff7ffbffffdc95fffefffff7effffb8effffefffbefffdfff169efbffffdffdfdffe1defbfffffff7fffffc1dfffbeffffefffbff800fefbffffbffefbff else (if i < 26 then 0xbc3ce95ffbfffefdfffffffc3bbfbffff7ff7fffff69ffffffdffdfbffbf696fffbfffffdffffefcb3fdffffefdfffffff87afeffffdffffdfff6f17fffeffffdf7fffeda5ffefbffeffffffffad1fbdfffffffffbfff4b6fbffeffffef7fffe78ffff7efff7ffff7fcb6ffbfbfffeffefeff8f1ffeffeffffffffff0fbefffbdfff7efff7e007fffffffff7ffbffbc4ff7f7ffffffdfdff711fefffff7fffefffad2fffff7dfffffffdfd877ffef7ffffffffefad2ffffffdfbffdfbff52fbffffbeffffdffee96bfffbffff7ffff7fd0f7fffefff7dffffdf9e2fbffffbfffffbffe34bf7ffbffffffffffc59fffffdfffffffdffc95ffbfffefeffffeff8f0ffdfff7bffeffffb169effffdffffbffffa1dbfffffffdeffffffc1dff7dfff7effeffff800dfffffdfff7dfff7 else 0xc3c3e9bdffffffdffff7fffc47bffffdffefffff7f6a7fffffffdffffbf7e97ffbfffffbffff7ffcb77fffefdffdffffff87f7fffeffffefffdfef1ffdffffeefffff7fda7ffdfffbefffffffdad5f7fffffffefbffff4bf7fefffff7dffffee78ffefffffffffefffcb6f7f7fffeffefdfff8f3f7ffbffffbffffff0faffefdffefbfffffe007fffffffdffdffffbc5bf7ffbffffbf7fff711fffffbffefbffffed33fffdffffdfff7dfd87fefffffffffdf7ffad3fffff7ffff7effef52ffffdfbfffdffff7e96ffdffffdffffbf7fd0f7ffffefdfffffffb9e0ffffdffffff7ffff34affefdffeffffffbe5a7fff7ffbffff7effc96dffffdfdffff7fff8f2f7fffdfff7fffdfb16dffff7ffbefffff7e1dfffffffbffffffffc1dbffffbf7fffffff7800bffff7ffdfbffbff)) else (if i < 28 then 0xcb4de95fffbfbffffbffeffc37ffffbffbffffdfff68fffbffdffffbf7ffe957fffffeffffbffdfcb3fffdffffdffffbef877fffdffffbffef7fef0fdffffbfffffeffeda5fbffefdfffffffdfad2fffffffefbffffdf4b3ffffffef7ffff7fe78fbefff7ffff7fffbcb5fffffefff7dffffd8effffffffdffffff7f0efffeffefbfff7fffdff7f7fffffffdffffdbc2effeffffffdffffb70dffffbffbefff7ffed27ffdffffbffeffffd86bf7fffffff7effffad2fffbf7ffbfbffbff52ffefbffff7ffefbfe96bfffffbffffbdfffd0efdfffffffffbffdf9e1fff7fffffdffdfdf34bfdfbffdfffffdffe5a7fbffdffffffbffdc967fff7fffffefffff0f0ffefbffeffffefff16bfff7fefdfff7dffe1e3ffffdeffffffffbc1ebffeffffeffffefd800fffffff7dfff7fff else (if i < 29 then 0xd2d3e99ffbfbffffbff7dffc3bffbfffffffdfffff69fdfff7dffeffffefe95fffff7ffffbfffffcb5fefdffeffffdfdff87ffdfffff7ffdefff6f1ffffbefffffffefdda6ffffdfffffffdf7fad5ffffffbefffbefff4b5fffffffffffbffee78dfff7ffffffffefdcb5ffff7ffdfbffffbf8effbffffbfffffffff0f1fbfffefff7fffffa007ffffbffbffffdf7bc4ff7ffff7f7fffdff711fffffdfbffdffffad3bdffffeffdfbffef987ffffffffdfffffffad3fef7ffdffffdffff531ef7ffff7fffbfff696fffffffffbf7ffff50f7fefdfffffffefff9e2fbffffff7ffdfbff34bfdfff7fffffbfffe5a7bfffffffdf7ff7fc95ffefffffffffff7f8eff7dfffffffbf7fff169efffdfbffef7fffe1dfffffbfffffffbefc1dff7effdffffffbff800ff7ffbefff7ffffb else 0xda5ae9bdfbffffbffdfdfffc3bffff7fffffffffff69dffff7ffdfbffdffe96fffeffffdffdffffcb7dfbff7fffeff7fff87fbffffbffff7ffdfef1fff7dffffeffefffda6fdf7fffffffdffffad5ffffefbffefeffff4bffffdeffffefff7ee797feffffdffffbfffcb6fffffefdffffeffe8f3ffffffffffdffefb0f3ffbf7ffffffffefdfffffefff7ffffbfffbc3effff7fbffff7fff711f7ffbefff7ffffbed31ffffbffff7ffeffd877ffffff7bfffffffad3fefffdfbffbffff75317ffff7ffbf7ff7fe96ffeffffffdffffbfd0ff7efffff7ffbffff9e4bfffff7ffdfbffdf34f7ff7ffffffffffde5a7fbffffffbffffffc96efdffffbfffffffb8f1efffbffffbefffff16bff7f7ffdf7fffffe1e3ffbfffffffefdffc1e6f7ffdffffdfffff800efff7fffdffffeff))) else (if i < 33 then (if i < 31 then 0xe1e2e9bf7ffff7fffdffffdc43ffdffff7ffffff7f6afefefffbefff7fffe97ffffffeffeffffffcb9bffdffffbf7fffdf87ffffdffefbffffffef1fbfffffefff7efffda67ffffffffefbffffad7fffbefff7dfff7ff4bbfefdffffffffeffe78f7ffff7fffffefffcb5ffffbeffffefff7f8f1fffbfffff7ffdfff0f3f7f7ffbfffffeffe00ffbffdffffbfbffbbc5ffff7f7fffdffffe713fff7fffdffffbdfed33ffdffff7ffff7ffd87fffffbdffffffff7ad4fffefbffbffffdfb52ffffdfff7effffffe973effffbf7ffff7ff9107effffdffeffffef9e5fffffbffbf7fefef34ffffffffefffffbfe5af7ffff7dfffffffec977bffffffffefffdf8f1fff7fffffbffffbf16bfbf7ffbefffffffe1e2fbffffffffffffdc1e77ffbffff7dfffff800ffbefffbffffbfff else (if i < 32 then 0xe96be97ffffbffbf7fffdffc3beffffdfffffeffff697effffdfff7fffff695ffffffffdffffefbcb1feffffeffffffdff86fffbffdf7fffffffef07bffffbfff7bffefda37fffffffbeffffffad1fdfbffdfbffbffff4b3fdffffefff7dfffe787fffdffffbeffffecb3ffdffffffdffefff8f1fbfffffdffdfbffd0effbffdfffffdffffdffdffefffff7fffdffbc2ffbfffffeffffeff70fefbfff7fffef7ffed33effefefffbeffffd887ffefbfffffffbefad3ffffffeffffdf7ff531fefffbefff7ffff696ffffdffffffbffff50efffff7fffffff7ff9e1ffffffefbffbefff3497fffffdfffffffde5a3fffbefff7ffffff4967fffdffff7ffdfbf8f1fbffffdeffffdffe169ffffdfbfffffffbe1e2ffffffff7dffffec1e7fdffffef7fffeff800fbffff7fffeffffd else 0xf0f2e97ffbffdfdffffdfffc3dffffdfffffefffbf695ffffdffefffffffe96fffeffdffffefdffcb3fffffbfbfffeffff87fdffefdfff7fffef6f1ffffffff7f7ffef7da3ffffffffffffffffad3befff7efffbffffb4b7effffbffdffffbfe787ffffffdfdffffdfcb3fbeffffffff7ffff8f0ffffffbffefbffbf0efffeffffffdffffedff7ffffffdfbffdfffbc1fbf7ffffffffdfff70ef7ff7fffdfbffff6d2bff7f7ffff7fffffd86fffbfffffffdefffad17efff7ffffbfffff52b7ffefbffeffffffe96bfdfdffffefff7efd0efffeffefffff7fff9e1fffffbffff7dffef349fffff7ffff7ffbfe5a7fefdfff7fffdfbfc96ffeffffffff7bffd8f1ffffbffffff7ff7d16bffefdffffffff7de1e3ffffff7bfffbfffc1dffffff7bffffbfff800bfff7ffffbfffdfd)) else (if i < 34 then 0xf879e99fbffdf7fffefffbfc43fff7fffffbffdf7f69fefdfffffffffbffe97ff7ffdffffeffffdcb5ffff7f7ffffffffd87bffef7ffdfffffefef17ffdffffbffef7ffda5fffff7bffffffff7ad5fffefeffeffffdf74bbfffbffdf7ffbfffe7977fffffdffffbffdcb5f7fffffff7ffffdf8f3ffffbffffbffefdf0f3fdfffffefffff7fe006ffffffdffbffffbbc3effffefffffffffb70fffeffffdfbffff7ed2fefdffefdfffffffd87dfffffffff7dfffbad2dfffffffeffffffb52dffbefff7ffffbffe96befdfffffffdfbffd0dff7fffffffffffff9e07ffbefff7ffff7ff347fffbffffbffefffe5a3bf7ff7fffeff7ffc96f7ffffbffefbffdf8f1fffbdfffffffefbf169ff7ffffffffddffe1e3ffffffbfff7dffdc1e7ffffdffffefffbd800ffdffffdffffbfbf else (if i < 35 then 0x10000e95ffefbffffbffffffc3bf7fffffbffefdfff693f7ffbffffff7fffe96fffeffffdfbffdffcb3ffff7fffeffffeff87bdfbffeffffdf7ffef0fdfff7fffffdffffda4fffdefffffffefffad3fdfbffdffffefbff4bbfbfff7dfff7ffff6797fffdf7ffffbffff4b5ffffefff7fffefff8f5fffbffbfbffbf7ff0fb7fffff7ffff7ffbe00fffffdfffffffefdbc4ffff7ffffbffefff711f7fffeffffffdffcd33efffbf7fffffff7d883ffffffffefffbefad3ffbffffbefffffff52fdfbffdffffbffffe973dffffbffdfbffff90f7ff7ffffffffffdf9e2feffffdfdffeffff34dff7fffefff7fffee5afdffbffff7f7fffdc96ffffbfffffffdfff8f0fddfffff7fffffff1697bfffffffdfbfffe1e7fff7efff7effeffc1f7fefbffffbffbf7f800fffffeffffdfffff else 0x10787e97f7ffffff7ffbffffc3f7ffffffffbfbffbf69efffbfffffbffffde97ffdffffdf7ffbfffcb5effffffbfffffffd87bf7ffbffff7dffffef1bff7efffbeffffffda7ff7dfffffffef7ffad7dffffbffffdeffff4bfdfffefffdffffdfe79fff7f7fffdffffdfcb6fffbffdffffbffff8f5ffffefdffffdfff70f7ffffefffff7ffbfe007ff7dffdffffffffbc4fff7fffdffefdfff711ffffbeffffefffbed36fff7dfffffffefbd887ffffffbeffffeffad4bffffff7ffffbffd52fffff7ffffbfffefe96dffffbffbffffff7d0fff7fffdffffff7ff1e3fdfff7dfff7fffff34dfffff7ff7ffff7fe5abfdffffefbffff7fc977fefffbeffffffff0f3f7ffff7ffdfbfff716bffffffff7efffffe1e7fefdffffbffdfffc1f77dffffdffffdfff000ffffdffffbffffff)))) else (if i < 42 then (if i < 39 then (if i < 37 then 0x10f0fe97f7fffffff7ffffffc43ffffdffefdffdf7f69ffbfffffeffffeffe97fffffefdffdffffbcb7f7ffffffffefff7d87fffbffffbeffffefef17f7efffbffffffffda5fefffffffffbfff7ad5dffdffffef7ffff74bbff7efffbffffbffe79fbfdffffbffbf7ffcb6ff7ff7ffffbfffff8f77ffdffffbefff7ff0f7fffffffefff7fffe00efefffffffefdfffbc6f7ffff7ffbdfff7f713ffefffffffff7efed33fbefffffffffbffd887ffff7dfffbf7fffad4ffffbeffffdfff7f531ffbffffdfffeff7e977ffdffefbffff7ff90ffffffbfffffdffff9e3bffdffffbfffffef34bfffffffffffefdfe5a7bffffbf7fffefffc977efff7bffdffffff0f2ffffefff7dffffef169ffffffefbffffffe1eb7dffefdffdffffdc1efffffefffbefffff800fffffffbf7ffffbf else (if i < 38 then 0x11698e97ffffdffefffffbffc3fffdfff7ffff7f7ff69fbfffffdffffdffee97ffffffbff7ffff7dcb3ffff7fffffffefff877f7ffffbdffffdffef0fefffbefffffffdfda67fffffffbf7ffdf7ad3ff7ffff7fffffeff4b7df7fffffffbffff6797dffffdffefbffff4b4ffffffffbfffffdf8effdfbffbfffffffff0effbffffbffeffffddffefff7ffff7f7ffffbc3ffffbffefbffefff70dffdffffffff7dffed2b7bfffffffdeffffd877fff7ffffbf7feffad2ffff7fffefff7bff52ddffffdffffbfbffe96bdfff7f7ffffffefd0efffdffffff7fffef9e0fffbfff7fffff7ff34bff7fefffff7dffde5a7fffbfdfffefffff496ffffdfff7fffdf7f8f2fff7ff7efffdf7ff169fffff7ffffffffde1e5fff7f7fffffffbec1effffdffefbffdfff800fffffefdfffffffd else 0x11e20e93fff7ffbffffbffffc3ffdffefdffdfdffef697ffffeffffeffeffe95ffdfffffffff7effcb1ffdffffbfff7ffff876ffff7dffffefff7ef15ffefdfffffffdfbda4ffffffffdffffdffad1effffef7fffffffd4b3f7ffbffff7fffdfe787fffefff7efffff7cb1fffffffffffff7ff8edbdffefdffeffffff0ebbfffffffbffffbf5fefff7fffffeffffbfbc0ffeffffdfff7ffff70b7bffffbffbffffded22ffffffff7efffffd86ff7efffbfbffdfffad2fbdffffdfff7dfff52affffbffffbfffffe966ffffbffffbffdffd0effbfffffdffefdff9e0df7ffffffffeffff347bffdfffffffffdfe59ffefeffffdffffefc95fefbffdffffdffff8efff7fffdfff7dffff167fffbdffffffff7be1e3fdfbffdffffefbfc1e7ffffefdffdffffb800ffffff7fffeffefb)) else (if i < 40 then 0x125a6e97fdffdffffdffffffc3ffff7dffeffffefff68fffefffffbffffffe95efdffeffffffdfffcb5f7ffff7ffdf7ff7f87fffdf7fffeffefefef17ffdfffffffefbffda6fffffdefffff7ff7ad3ffff7fffffbffeff4b3ffbffffffffdfdfe787ffdffdfbffffbffcb3bffff7ffffffffef8efdffef7ffbfffffff0effffeffeffffdfbfdfffbffff7f7fffdfffbc2ffffefdfffffffdf70effffefff7dfff7fed27ffffffdfbffffffd8777dfff7fffdffffead2effffdffff7fff7f52bffeffffefdfffffe967f7effffdffdffffd0ebfffffbffefeffff9e1bffdfffffefffff734bff7fffefdffefffe5a7dffffff7ffffbff896fefffffffbf7ffff0f0fffbf7fffeffffff167ff7bfffffffdfffe1dfbeffeffffffdfffc1e7bffdf7ff7ffffdf800ffefdffffdffefff else (if i < 41 then 0x12d2ee97fff7ffffdfffffefc3bffffffdf7ffdffff697fdffffbffbffffbe97efff7fffefeffffdcb5ffffbfffdfff7fff87bdffffffdffdf7ffef0bf7fffffffefffffda5fffdefffefdfffffad5ffef7fffefffdf7f4bbf7ffffbfffdfdffe797ffff7effffefff7cb4ffffffffff7fffef8f1fefbffefffffefff0f3fffff7ffff7effedffffffbfbffff7ffffbc47ff7dffdffffffbf711ffefffbefffdfffed2bfffff7bffffffffd885fffbf7ff7fffdf7ad3ffff7ffbf7ffffff531effffdfbffffbff696ffffffefffbffffbd107ffffbffdfbffdfb9e2ffbffffffffffdff34dbffffdfbfffffff65abfffffbffffbffdf896fffdffffbdffffff8f1fbfbfff7bfffffff16bfdfffffffefbffee1e7fffbffffdfbfffec1e7ff7fffdffffdfff800f7fbfffeffffbfff else 0x134b6e93ffffffdfffffefffc36fdfff7fffeffffff68effffefffbfffffde95ffdffffbfbfffeffcb3fff7ffbdffefffff875fffffffffbefffdef06fffffffef7fffffda5ffbefffdf7ffbfffad3ffefffffffef7ffb4b3fffeffffffdffffa787ffbf7ffff7ffbffcb3ff7fffff7ffeffff8edff7ffdfffffeffff0efdffdffffdfbffbfdfffffbfbfffdffffdfbc3ff7fffdffffddfff70ffeffffbfff7dfffed2bfffbfffffffff7dd87ffdfbffdffffdfbfad2ffefff7dffffffff52dffffbf7ffff7ffbe965fffffffdffffdffd0f7fff7ffbeffefdff9e0fffffff7ffff7fff349ffff7dfff7ffffbe5a2fffffffffbffef7c95ff7fffffbffffbff8efdfbffdefffffffff167bfffffffdffffdfc1dfff7ffff7dffffbfc1e7befffbffffbfffd800fbffffbffdfbffff))) else (if i < 45 then (if i < 43 then 0x13c3de94fffffffffff7ffdfc3afffff7ffbfffffdf697fffbffdffffdfbfe95effffeffffffdfffcb3f7fffefffffffefb877ffffbffdffffdf7eeffffffffbefffffffda4bf7ffbf7ffbfffffad3dffffefff7dffeff4b3ffdffffbffffff7e77ff7fffffefff7fffcb4dfffffdffefbffdf8ef7ffffffffeffffef0ebfefffff7fffefffdff7bf7ffff7fffefffbc37bfff7fffdf7ffff70efffff7ffdf7ffffed2ffdf7fffffffbeffd87fff7ff7fffefbfffad4f7ffdfbffbffff7f52ffffffffffbffdf7e967fff7fffffffdfffd0fffbffefdffdfbffd9e1fffffefffffffeff349ffffbffbfffffefe59fffbfffffffbf7ffc963ffffdf7fffeffef8f0fffdfbfffffff7ef169ffffffbf7ffdf7fe1e3bffffbfffffdfff41ef7ffbffffbffffdf000fffff7fffdffffdf else (if i < 44 then 0x143c4e99fffdffffff7ffbf7c3fffbdffefffffffff69fff7feffffefefffe97ffffbf7fffeffffecb7ffefdfffffffef7f87bffffff7efffdfffef07ffffffbfffffffdda6f7ffbefff7ffff7ead1fffeffffffff7fff4afeffffdfdfffffffe783effffeffdffffefcb4ffffefffbf7ff7ff8effeffffffdffffeff0ebfffff7f7ffbffffdffbf7fffdffffefffbbc4dffeffff7effffdf70ffbf7ffffbffffffed2fddffffffff7fffed87f7ffbffffbfffffbad2ffdf7ffbffffffff52fefdffffefff7effe96bfbffdffffdfffffd0ffffefeffefdffeff9e2fffefffff7ff7fff34ddfbfffffffbf7ffe5a7dffffffff7fffefc977ff7effffefff7df8f2fdfbfffffffefdff16bffffffdfffbffff61e3ffff7bffffffffec1e7ffbffffbfffefdf800fff7ff7f7fffefff else 0x14b4ce97feffffffdffffbffc3b7efffffffff7ffff697fffbffffbeffeffe95ffefdfffffffffbfcb3fbdffeffffffdfff87bfbffef7ffefbfffef0ffffbefffffffeffda6ffdfdffdffff7effad5ffdffefbfffffffd4bbffff7dffffdffefe787fffffffbffffdffcb4fffeffffdffefdff8f1efffffefffff7ff70f3ffff7effeffffdfdfffffff7ffff7fffdfbc3feffffbeffffefff710fdfff7dffffffff6d2fffffffff7dfffbfd877fffffff7dffffbfad2fdf7ffbffffbffff52afefffffffffbfffe95fbffbfffffffffffd0e7fdf7ffbefffdfff9e0ffbffffbffdffffd349f7ff7fffffeffffc5a3ffffbffdfbffbffc96ffbeffffdffefdff8f0efffffffffbdffff167fffff7ffffbffdfe1dfffbdffffefff7ffc1dfdffffdffffbfdff800feffefeffffefff7)) else (if i < 46 then 0x152d4e92ffffffbffefdffffc32fffbfffffeffffff687fdffffefbffdfffe94fffbfffeffffdffecb1fbffeffffef7ffff872ffefffff7dfffffeefffdfffffffff7dffda4dfdfff7ffff7dfffad1efffbdfff7ffffff4b3ffbf7ffffbfffefe777fffffeffffdffffcb4ff7ffbf7ff7dfff78edfffffbffff7fffff0ebfffdffefffff7efdff7fffffffdffef7ff3c1ffffeffffffdffef70bbffefbffffffffded27ffffffdefffbf7fd86f7ffffbefffffffead0fbffdffffdffffff52affffeffefbffffde963fbffffefffffdffd0e6ffffefdfff7ffff9e1f7fffdffeffffefe34bffeffffbf7ffff7e5a3ffefffdfffdffffc965ffffff7fffdfffb8efdffffffff7dfffff167ffbefffdf7fffffe1e3f7dffffbffdf7ffc1dfffffbfffdfdffff8007ffbeffffdfff7ff else (if i < 47 then 0x15a59e9bffffffffdfbffbefc3fffffffffbffffbff69fbffffbffff7fffee96fdffffbfffffffdfcb6fff7ffff7effffef87bfff7ffefbffffffef1fbeffffffff7bfff5a7ffffbffffddffffead5ffff7ffdffffdfff4bbffeffffdffefdffe78ffbffdffffdfffffcb67ffdfdffffdffeff8f3fffefffff7ffbfff0f3ffeffdffffdffffdfffefffffffdfbffffbc4fff7effffefff7ef711fefbfffffffbeffed37ffffefdfff7bffdd887ffffffffffdffdead4ffdfffff7fffefef52ffffdffdffffffbfe96bfffffbfffffbffdd0f6fff7ffffbfffffe9e1ffffbffeffffdfff34beffffefdffff7ffe5afefffbdfffbffff7897ffffffffdfbfff7d8f1ffffffefbfffffff16bbf7ffffbffbffffe1ebbffffdfff7bffdfc1efffbffff7fffffbf800fdfbffffbfffffff else 0x161e200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000018780000000000000002f0dfffffffffffffbeda5ffeffffdf7fffeffad5efdffdffffeffffb4bbf7fffeffefeffffe793ffdffffdffffffbcb7ffbf7ff7efffbfff8f5fffffffbff7ffff70fbdfffffffdfbffff600fffff7ffdffffdffbc5fefbfffffffbf7ff711df7ffffffffdfffed33fffff7ffdf7ffdfd87fffbeffffffff7ffad3fdffffeffffbfbff531feffefdffffdffbe96ffffffffffbffefbd0f7fdffffbffffff7f9e2ffefffffffefeffe34bffffbfbffff7fffe5aaffffdffeffffdf7c96ffff7feffffffdff8f0fffffefbfffffffb16bdffefdffefffff7e1e7ffff7ffbefffbffc1dffffffbffffffbff800befffff7ffbffffb))))))
+private def withinPeriod (n : ℕ) : ℕ :=
+  let j := ShortPeriod30030.wheel n
+  let data := packet (j/2048)
+  let e := (data >>> (75*((j%2048)/64)))%(2^75)
+  (data >>> 2400)+(e >>> 64)+pop (e%(2^(j%64)))
+
+def wheel (n : ℕ) : ℕ := (n/510510)*92160+withinPeriod (n%510510)
+private def check (r : ℕ) : Bool :=
+  wheel (r+1) == wheel r + (if cop (r+1) then 1 else 0)
+
+private def valid (lo len : ℕ) : Prop := (List.range' lo len).all check=true
+private theorem glue {lo a b : ℕ} (u : valid lo a) (v : valid (lo+a) b) : valid lo (a+b) := by
+  unfold valid at *
+  rw [← List.range'_append_1,List.all_append,u,v]
+  rfl
+
+private theorem halve (lo n : ℕ) (h : valid lo (n/2))
+    (k : valid (lo+n/2) (n-n/2)) : valid lo n := by
+  simpa only [show n/2+(n-n/2)=n by omega] using glue h k
+private def covered (lo hi : ℕ) : Prop := ∀ j, lo≤j → j < hi → check j=true
+private theorem checked {lo hi : ℕ} (h : valid lo (hi-lo)) : covered lo hi := by
+  intro j lower upper
+  exact List.all_eq_true.mp h j (List.mem_range'_1.mpr ⟨lower,by omega⟩)
+private theorem joinCoverage {lo mid hi : ℕ} (l : covered lo mid) (r : covered mid hi) :
+    covered lo hi := by
+  intro j lower upper
+  by_cases h : j < mid
+  · exact l j lower h
+  · exact r j (by omega) upper
+
+private theorem big0 : covered 0 7976 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big7976 : covered 7976 15953 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big15953 : covered 15953 23929 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big23929 : covered 23929 31906 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big31906 : covered 31906 39882 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big39882 : covered 39882 47859 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big47859 : covered 47859 55836 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big55836 : covered 55836 63813 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big63813 : covered 63813 71789 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big71789 : covered 71789 79766 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big79766 : covered 79766 87743 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big87743 : covered 87743 95720 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big95720 : covered 95720 103696 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big103696 : covered 103696 111673 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big111673 : covered 111673 119650 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big119650 : covered 119650 127627 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big127627 : covered 127627 135603 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big135603 : covered 135603 143580 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big143580 : covered 143580 151557 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big151557 : covered 151557 159534 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big159534 : covered 159534 167510 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big167510 : covered 167510 175487 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big175487 : covered 175487 183464 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big183464 : covered 183464 191441 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big191441 : covered 191441 199417 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big199417 : covered 199417 207394 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big207394 : covered 207394 215371 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big215371 : covered 215371 223348 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big223348 : covered 223348 231324 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big231324 : covered 231324 239301 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big239301 : covered 239301 247278 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big247278 : covered 247278 255255 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big255255 : covered 255255 263231 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big263231 : covered 263231 271208 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big271208 : covered 271208 279184 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big279184 : covered 279184 287161 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big287161 : covered 287161 295137 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big295137 : covered 295137 303114 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big303114 : covered 303114 311091 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big311091 : covered 311091 319068 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big319068 : covered 319068 327044 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big327044 : covered 327044 335021 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big335021 : covered 335021 342998 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big342998 : covered 342998 350975 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big350975 : covered 350975 358951 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big358951 : covered 358951 366928 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big366928 : covered 366928 374905 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big374905 : covered 374905 382882 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big382882 : covered 382882 390858 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big390858 : covered 390858 398835 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big398835 : covered 398835 406812 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big406812 : covered 406812 414789 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big414789 : covered 414789 422765 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big422765 : covered 422765 430742 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big430742 : covered 430742 438719 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big438719 : covered 438719 446696 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big446696 : covered 446696 454672 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big454672 : covered 454672 462649 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big462649 : covered 462649 470626 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big470626 : covered 470626 478603 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big478603 : covered 478603 486579 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big486579 : covered 486579 494556 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big494556 : covered 494556 502533 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem big502533 : covered 502533 510510 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+set_option maxRecDepth 16000 in
+private theorem allrows : covered 0 510510 := (joinCoverage (joinCoverage (joinCoverage (joinCoverage (joinCoverage (joinCoverage big0 big7976) (joinCoverage big15953 big23929)) (joinCoverage (joinCoverage big31906 big39882) (joinCoverage big47859 big55836))) (joinCoverage (joinCoverage (joinCoverage big63813 big71789) (joinCoverage big79766 big87743)) (joinCoverage (joinCoverage big95720 big103696) (joinCoverage big111673 big119650)))) (joinCoverage (joinCoverage (joinCoverage (joinCoverage big127627 big135603) (joinCoverage big143580 big151557)) (joinCoverage (joinCoverage big159534 big167510) (joinCoverage big175487 big183464))) (joinCoverage (joinCoverage (joinCoverage big191441 big199417) (joinCoverage big207394 big215371)) (joinCoverage (joinCoverage big223348 big231324) (joinCoverage big239301 big247278))))) (joinCoverage (joinCoverage (joinCoverage (joinCoverage (joinCoverage big255255 big263231) (joinCoverage big271208 big279184)) (joinCoverage (joinCoverage big287161 big295137) (joinCoverage big303114 big311091))) (joinCoverage (joinCoverage (joinCoverage big319068 big327044) (joinCoverage big335021 big342998)) (joinCoverage (joinCoverage big350975 big358951) (joinCoverage big366928 big374905)))) (joinCoverage (joinCoverage (joinCoverage (joinCoverage big382882 big390858) (joinCoverage big398835 big406812)) (joinCoverage (joinCoverage big414789 big422765) (joinCoverage big430742 big438719))) (joinCoverage (joinCoverage (joinCoverage big446696 big454672) (joinCoverage big462649 big470626)) (joinCoverage (joinCoverage big478603 big486579) (joinCoverage big494556 big502533))))))
+
+private theorem wheel_shift (q r : ℕ) : wheel (510510*q+r)=q*92160+wheel r := by
+  simp [wheel,Nat.mul_add_div (by decide : 0<510510),Nat.add_mul,Nat.add_assoc]
+
+private theorem cop_shift (q r : ℕ) : cop (510510*q+r)=cop r := by
+  have m2 : (510510*q+r)%2 = r%2 := by rw [show 510510*q=2*(255255*q) by ring,Nat.mul_add_mod]
+  have m3 : (510510*q+r)%3 = r%3 := by rw [show 510510*q=3*(170170*q) by ring,Nat.mul_add_mod]
+  have m5 : (510510*q+r)%5 = r%5 := by rw [show 510510*q=5*(102102*q) by ring,Nat.mul_add_mod]
+  have m7 : (510510*q+r)%7 = r%7 := by rw [show 510510*q=7*(72930*q) by ring,Nat.mul_add_mod]
+  have m11 : (510510*q+r)%11 = r%11 := by rw [show 510510*q=11*(46410*q) by ring,Nat.mul_add_mod]
+  have m13 : (510510*q+r)%13 = r%13 := by rw [show 510510*q=13*(39270*q) by ring,Nat.mul_add_mod]
+  have m17 : (510510*q+r)%17 = r%17 := by rw [show 510510*q=17*(30030*q) by ring,Nat.mul_add_mod]
+  simp only [cop,m2,m3,m5,m7,m11,m13,m17]
+
+theorem wheel_succ (t : ℕ) :
+    wheel (t+1)=wheel t+(if cop (t+1) then 1 else 0) := by
+  let r := t%510510
+  let q := t/510510
+  have split : t=510510*q+r := (Nat.div_add_mod t 510510).symm
+  have item := allrows r (Nat.zero_le _) (Nat.mod_lt t (by decide))
+  have step : wheel (r+1)=wheel r+(if cop (r+1) then 1 else 0) := beq_iff_eq.mp item
+  rw [split,Nat.add_assoc,wheel_shift,wheel_shift,cop_shift,step,Nat.add_assoc]
+
+private theorem cop_iff (n : ℕ) : cop n=true ↔ ∀ p ∈ Nat.primesLE 17, ¬ p ∣ n := by
+  have ps : Nat.primesLE 17 = ({2,3,5,7,11,13,17} : Finset ℕ) := by decide +kernel
+  rw [ps]
+  simp [cop,Nat.dvd_iff_mod_eq_zero]
+
+theorem count_rough (t : ℕ) :
+    ((Icc 1 t).filter (fun n => ∀ p ∈ Nat.primesLE 17, ¬ p ∣ n)).card = wheel t := by
+  induction t with
+  | zero => decide +kernel
+  | succ n ih =>
+    have interval : Icc 1 (n+1) = insert (n+1) (Icc 1 n) := by
+      ext k
+      simp only [mem_Icc,mem_insert]
+      omega
+    have fresh : n+1 ∉ Icc 1 n := by simp
+    rw [interval,Finset.filter_insert,wheel_succ,←ih]
+    by_cases hp : ∀ p ∈ Nat.primesLE 17, ¬p ∣ n+1
+    · rw [if_pos hp,(cop_iff _).mpr hp]
+      exact Finset.card_insert_of_notMem (fun mem => fresh (Finset.mem_filter.mp mem).1)
+    · have no : cop (n+1)=false := Bool.eq_false_iff.mpr (mt (cop_iff _).mp hp)
+      rw [if_neg hp,no]
+      simp
+
+end ShortPeriod510510
+
+
+/- Certified wheel indices for counting primes using the eight reduced classes modulo thirty. -/
+namespace FastDenseA26
+
+def index (n : ℕ) : ℕ := 8*(n/30) + ((703383147439395582067753010374709520 : ℕ) >>> (4*(n%30)))%16
+
+def number (i : ℕ) : ℕ := 30*(i/8) + ((1021784272097 : ℕ) >>> (5*(i%8)))%32
+
+theorem shift_index (q r : ℕ) : index (30*q+r) = 8*q+index r := by
+  unfold index
+  rw [Nat.mul_add_div (by decide : 0<30),Nat.mul_add_mod]
+  omega
+
+theorem shift_number (q j : ℕ) : number (8*q+j) = 30*q+number j := by
+  unfold number
+  rw [Nat.mul_add_div (by decide : 0<8),Nat.mul_add_mod]
+  omega
+
+theorem wheel_step (n : ℕ) :
+    (index (n+1) = index n ∧ (2 ∣ n+1 ∨ 3 ∣ n+1 ∨ 5 ∣ n+1)) ∨
+    (index (n+1) = index n+1 ∧ number (index n) = n+1) := by
+  have tab : ∀ r : Fin 30,
+      (index (r.1+1) = index r.1 ∧ (2 ∣ r.1+1 ∨ 3 ∣ r.1+1 ∨ 5 ∣ r.1+1)) ∨
+      (index (r.1+1) = index r.1+1 ∧ number (index r.1) = r.1+1) := by decide +kernel
+  let q := n/30
+  let r := n%30
+  have split : n = 30*q+r := (Nat.div_add_mod n 30).symm
+  have next : n+1 = 30*q+(r+1) := by omega
+  rcases tab ⟨r,Nat.mod_lt _ (by decide)⟩ with ⟨eq,hd⟩ | ⟨eq,hn⟩
+  · left
+    constructor
+    · rw [next,split,shift_index,shift_index,eq]
+    · rw [next]
+      rcases hd with h|h|h
+      · exact Or.inl (dvd_add (dvd_mul_of_dvd_left (by decide : 2 ∣ 30) q) h)
+      · exact Or.inr (Or.inl (dvd_add (dvd_mul_of_dvd_left (by decide : 3 ∣ 30) q) h))
+      · exact Or.inr (Or.inr (dvd_add (dvd_mul_of_dvd_left (by decide : 5 ∣ 30) q) h))
+  · change index (r+1) = index r+1 at eq
+    change number (index r) = r+1 at hn
+    right
+    constructor
+    · rw [next,split,shift_index,shift_index,eq]
+      omega
+    · rw [next,split,shift_index,shift_number,hn]
+
+theorem skips_composite {n : ℕ} (large : 5 < n) (d : 2 ∣ n ∨ 3 ∣ n ∨ 5 ∣ n) : ¬ n.Prime := by
+  intro h
+  rcases d with hd|hd|hd
+  all_goals rcases (Nat.dvd_prime h).mp hd with e|e <;> omega
+
+theorem index_bound {n b : ℕ} (h : n ≤ b) : index n < 8*(b/30+2) := by
+  have t : ∀ r : Fin 30, ((703383147439395582067753010374709520 : ℕ) >>> (4*r.val))%16 ≤ 8 := by decide +kernel
+  have a := t ⟨n%30,Nat.mod_lt _ (by decide)⟩
+  change ((703383147439395582067753010374709520 : ℕ) >>> (4*(n%30)))%16 ≤ 8 at a
+  have d : n/30 ≤ b/30 := Nat.div_le_div_right h
+  unfold index
+  omega
+
+
+private def packet (i : ℕ) : ℕ := (if i < 49 then (if i < 24 then (if i < 12 then (if i < 6 then (if i < 3 then (if i < 1 then 0x3ab60e119d9b6d2b63403944308218d32405aae037a522434c0a262c7570360b01689d1784d8c180345ada9c22287ce24050328618302abcad593d2030c2770494d45aa5a8602f214089851b7e3556002d62e1568bf88056a0702b99c742f3ad40648d102a0c41e22a6502b962402838dea735ca89501190266f8246c44cbf10b43024b307a4c570c944ab2022f02cdcdb50238f12c0211c383dc8219f6264e01f44c58b42aa71c8b5a01d64d33f3243e88518d01b999eb813c26c73811019ea0e3266581d892d2017b87588f9265aefb720162468c83e5081a96540142ef17c19b7171582101224f8cbcc8b37ac18c010454bf11453a2b4cb800e13a13f666e944fd2e00c1f8a154039ff0a3d9009f554c2ade2dade356007d56a61e78bd92676a0059a559dd3bd3d30ce600319eeda6eaf31e4fd50000f93ddbb67eefdffe else (if i < 2 then 0x6e2a1aab3e1522a44b506cc155941180896a81606b0b1474266d75888980693f40c0fd888a13367068030831c4901c11218066ae8021d1461b0180d064c5c788582a4742d9f0635a08ac312424892d5061f073110366302a4b006041b6614e808d83c6a05ebc476e0092ca50a6105ce4a84d62d2a8b935605b3c319653818c126cd059b91500ec0f60c2e06057e15a9d8d2182f54f0056a0931a610461a818205518bc61a44c88c27220536c760421da13859b20520104ac2b029c3d3000506a508e9861b26568204ee818992787024225d04d24c8ed84446e5c16c04bbb430300a25c31934049de34730e982b129e904831006c514dc3dcb1404672e644e1194e3471a044f2902ac8f81c5680a04301cb59861572ae6c3041838b14873440319e003fc32c8231e685da12703e5105574a88388099a03ca947a44d060391a67 else 0x9f0b7484c511415c01609d61a8596b4a171c00e09c12d050c8b409530c009a8197c9080613a698c098ed9364b110a8445650976866253324449301d095ab2f02e6f10089770094214780a82150eaae109291483817d0c62a4720913c280308cf932444108fe912809c930700d0608e5e0bb5812248c845908c938db21462d1ccc9208afc1834c29426c92b3089804002a54cd032bd3087d7e47c008a48aa32e08690c518403e11464280856903c80a0805a42c40841c525021058098e490827076a4626448f309c080d6b2520cf8291bc0807f33730adc5093211c107dd328a0cb018b1e12007bfa3d629317a25562c07aa022439c28252c20b0790750b88570ce409c407791063206c478c980b076250a0560e57012ca8074c840a61d07801915607347e08150c826b362007170ad654be00673ca306ff0ca5111855624559)) else (if i < 4 then 0xcd75a952b004238a29c0cc230860982146a41a90caa09532438eb84908c0c9728221601d91888810c81c45009c1612370160c6a04484ac5b842d1520c542145352a53c102600c3d5e80848b24268a1a0c20612c29522ec79b2c0c0ab618c242e1ca01800bf3b2f000a50c4409b30bdd230686435c3148060bc11aecd9f8078851140bac0c05b083829632030b9b02808f29811480420b81391b8914542e144d0b658ca9445083dddc830b515014462046a0a3520b37d11286981d9228d50b20442e88092671216c0b0ac88a3421c16342480af1d2692cf1064001da0ada898452e13c015aa00ac229ca1712421c40b60aad4872222704a918880a9923548144410652a10a866061d12c829004060a69a851a1197b5528e30a4f471023aae20ec48b0a335c2033c078e91eb40a20220891108190d51c0a08a1022e8a89109579 else (if i < 5 then 0xfb843047663443486d20fa66028088a811e1b000f9312a5510c8c02022c0f770ac891af329768430f620890ae31701848510f4da5208a1206a1ca280f3219e99312448f94a10f1963544a82996538180f02f30800c84c2ac2c50eed22860514324b021e0ed5cac44930a9342e040ec1d1800300025c605f0eab3101326344489b050e9393030404e496acac0e8018010ca0c2543c220e690472a44ad18459c00e512a2d9990a44135120e39ce4bc11c093338000e25062c8203074461540e0b319473a1482016f90df3b6c2644aa60269100ddcf9953002096585800dc1d14c62c8d991c3820dac206c0ee4203a500a0d9145c2ec1c1b220ccd0d7707e91cf0071849c80d608c30aaf430c54a000d4c1148b010c1853c220d361ac2144a1d1c26800d1f001e821b9016f3600d066e2e8c05a928c0540cef270445ada2c14a02 else 0x1289458300a4e80050c912745e009b10131a8508125fb0994855002a489112470eb264624015843712348051400a1968928a121c9160a29c4485981712074e0288dc9740601011f12d140009fa811ca411d681e5312936166d4811c4418240017e28070411ad258a73380c109415119b11740005c14502431187222442481990c8a311704ac18069a41a51521159aed22c04239040a6113e5f583b28a342cc1011259c9ba22404cd0878110b8cbb115a89c0641510f382a014a717d880e110dfd122480cb415402110c42a4f4cf12d18061610ab8b0844aa0a6274e91099116480b800322350108489a2d92078020740106e00d0470862cc392a1058083460e442811ad31041b424a48aa8268162102c04c505e00560a24e10148c594005f2a50e280ffddaa01c6043284e440fe35529094232cec38c0fd1a1c836400401f100))) else (if i < 9 then (if i < 7 then 0x154b8130c418eb9c2182153818204627062818a1151fb02c068d30997286150902615b108ce1821a14f3089255945026206714e14c9520184006ac0114cb4582e2412e4a144114b53303211c248ac1a8149eb2523081c168930a1483c6448743c4b7d041146b3c821851a278231c1458200599016194288c144552a9009a444209061431102f01e24a018454141d1a6165064c0710101401d1e5528e4c2c027313eb811449473813911113d5382a4a00b3c0866413be638c382c1231404713a5c3908ec1225ca988138d500229b20ea3970c1377003930646141d8171362c8907244460c8522134f841a8a05a12820d0133806c6c3412250b330131f0e1d8438a8a5284b130757008532344c82da12f1a11110813ae4503512df02180208849341b612c80196184788e8858a12b3a046a31781210192129c342d02a09d0b406c else (if i < 8 then 0x180d02c18a6c0341414417fd008d24240346140117e54a79b0a00508ce1a17cf88a1b3572000949817bc02c242484b10613417a60a8034aa1dd0069817968514240288082324177f58c2c1e4370116201767620e5c32d2b54001174d4869b242a46a4acc17392d9498517680010017233151512a86044c2a170d2a04060d934cb81116f760040b96e18e21a016e156c641181851842a16c8a0cf4116e2a2660116b55130304a120242ca169d318119a50c4cc8e4168392989600e8552d9c166c4243706a130d156016526134204eacba4b11163e4aa0412038b0322616282149d40980d2108f160f0e842afad040471515f95c2da8a01485109115e38121417c4100a8bb15d0014212c0c781246815bca43206846022d10315a3602a11d10e638678158b20d1ec17116452841579020919290540a20d156250249a370684c158 else 0x1ab8a00b01a5404212f51aa48801c1162a8c98a01a8fc111106515d83a001a7ea10421018422f0051a68140c9129080a966e1a52054248a32a7548a01a3b810494b29344e60a1a2475a420e0108d113c1a0e3499a440c6c9081819f6b9602a4d049409a919e146404891518968a419cf1a8448599a01410019bc8404e41038c6168019a64c54342111762091198a01bb921662a38b7119768220326a4518188a195f3220486e14e5a148194a715021138534601419344c4202889c0b653219254008a80cc061400a19118c640350311c088518ff1818d210208b005918e388e94452ab86b09718c9b221542a5861a39318b6531c86030130808618a14a2a81803d80b450188e65028509494118281877d25508a8165a80511865080619704008d584184c0fa0851a8347948a183b20250a2804142a43182053566841d82659c1)) else (if i < 10 then 0x1d6807184210d1841a211d530e2655410c42b0481d3e08c1e90a007228651d2c80240fe2070808881d14441b504538e0c4b41cfe0b19d54080141d921ce752c222889b8934881cd52060069c002168561cbe6647022591ba90081ca8099255073084642c1c900e580b1a8204ae931c7ca901c306162045601c681252b060091414a91c51c15072c550d00b281c3f4602ad0629108a001c2c240154048c70e2181c15e34769a00a10182a1bfe94ad3858022640591beb34050062460a138c1bd53d0074202d9859201bbbd94342a394d130911ba8042ec142401829921b8d086c4aacb06bf20a1b790e98210758a024a01b5f8935a391c5326c401b4b488822821a2390cc1b3622833434a809c1031b1d628426c38e518f201b089520af00858482321af674809c30231140401ae14010803d5a260ce41acd06180072c45c09c2 else (if i < 11 then 0x20121ad51590303a80421ffbad2588570083d0141fe81880c544624841191fd50231204986948e101fc10214ab53a81181201faa724f9810021163621f9a08d1082049c0120c1f83d4703c200308e5071f6ea182d9d0040a45a01f59142307726949a0001f3f5135780e4ba1888a1f29822064921c9632a41f1700ee52800a21240c1f02e902cc00c8714a041ee886543d7920486b901ecf088ca8f132091f941ebc35601212418c30821ea510c32282c92d311a1e92740603048432d0601e7a1c8b1cdd0290003e1e67220f64a1a30044041e4f59389298a46885811e3c542ec142086400b01e2704a1721888d780111e11530068424b8983921e009032040214170a211deb604cda310420a5121dd88a84602818a046491dbc196cb42307066bc31da761b411300aa68a041d90bcf04506460144831d7b2a440cc0d04c13a1 else 0x22ab48260a0540d037612299200a064f0518414422874025015c0488c0782272491b70042b406a80225bc86db4318008a2942249111710434c4a008422342a30953088027921222160301e2cc0082542220692764883108ec17721ef2a608ab410a9a26221d9c00025b851741c0b21c4c510a918d540224821ac64166880426b1995219406d821108a4b483f2181e10324011f40318021701048c1c01910803321630481864402802208214ea0109d198914168821364158116187642dc8211f383b8b85404b184021098258c61c0d03818920f69844260c44a4b80020e42750404648a4620020d03022c42c2513444820b4a59d091e2ae0266520a30b1c0a803324000c209028805bb0440443442079346396142158108e2064b1012c0c4a009ac9204dc02244cf04932133203d102801b0118a05142028c708e18020244ce1)))) else (if i < 18 then (if i < 15 then (if i < 13 then 0x2551ea8a1409f0a30846253c0764381220242716252930102235480540bc250fa8e04458c44ab1ba24fb70903428039c20c124e594104c48912ac8a624d232821e302303502024c008c104130382544624ad8065bc88330021022497418070757045806924862813f0020c408508247113b4124140211ea8245ac10640161c32aab424490a0708013418121a2434a744841043c064e024214d2192900220c819240a31322b056200cdc823f4135b0004665124a623e010670ca94880930223c6d62cc9904907794023b114e8058818883664239d6702188a01814a4923849d880a43d43081c72372310940a3008c07a0235a8a883266264d7104234b11820c208c40028323360478285f88029054231f02e21c5da022a12c230b4ad0d0015035142822ef1e8525a34252cd9322db9809330018a3812922c09eda4310215b88b8 else (if i < 14 then 0x27eb300a64000216888027d5e14226440261a39827c144088e911817c04127a91c2e94692e93810027930f01100d53145a85277b9b39083a34402cc22769000cc256488a894027562200350a054a602b2740005172e4109016ab272c876002ccb1205050271b12040360912a43042701a1860ca988d74e2426ef881885d2412c801026d9cc821993006c106926c1306a302a44ddb90026afc8820e0d10800863269b2340c15b60840914268a0cae02889180031026780b01082eb0c014422667418c072121182c002650043a58065066c871263d051832028291c02d2623627504a11c358969260e9250a604e838128425f7366144491161441e25e04cd220a48a63480b25c9d0013a49a43e244425b614a30256500050c525a69083406860816100258db27548a2034c8e48257b4326020a688c20c0256922c0898500c30720 else 0x2a71084c5a209601c60a2a5e0409282250b166c02a4941a5ac19c30a000a2a38d100901408a486a02a222678164040da0d092a0d28d244e40050a27129fda17008120c04123029eb468242100d71300229d0800a609ff9546c4529ba9f109123e410890229a7913100060a410cdc29978803042020500cb6297e0ba1764a8448a552296b34048218e02841d229557425d10d0202c6442942c600c49e10662008292e165101c8330600c32917a90069802286dea129058881d0146184040728ec28d37a4a0d30872028dc00208d056519004128ce00a008e48a02045028b8cb48bda26005060028a04c21a2e21632058d288c48169a054a224085287681a3c55048904507285cb8d25ec0146c2522284a30102b001119627028370e21443098017142281f4b4e842630a1064e280a850518515272011927f91438d10304e10800)) else (if i < 16 then 0x2d0b34aa80914c21404c2cf701b0860a2e9468012ce0f0421c20d904bc0a2cc73110848df51819952cb920c24800304015122ca1041d3134d143508b2c8c8440b3cb614680802c78259488011c21d6102c5d1eb2a3466b0098b12c486195146212d481402c37400647442120ca022c2248a91a010b3234142c0b4d482c0521a6624c2bf39241b33853042b882be3488010b02060053c2bce105a01688183b8922bbbd00050065f0909212ba690168287640988c42b942880415829a264402b820218f02c21c210092b6c075801b88214ae052b54c192cb072c2c88302b400341a3700056408d2b2c41a204a588cc180a2b15a4044e5064a879412b02108a8b80152234502af0800880bc11451a442add15252008e26005922acb850ba0031083880c2aae0d79e3464fd550082a9a8a144e85504881a02a8524200c57ac20a245 else (if i < 17 then 0x2f9851582a9289a0b8d02f851823c445890214222f70e3430806c23150092f6000482a9890040d822f477408f2b426e08c212f34140876402c9a20032f1dc2c122455da588402f08c61cc00330104af02ef224640981a0db230c2edbe207950642314c882ecad02c800a4410c1052eb3401aaa320442d3c52e9caad037602482540a2e8708604845079534322e772050c841811c00832e6628480034980107682e51c940450d0807022f2e3f46490200a65601112e27792041461222176d2e1600617432080149902dff4b1658a5961401222deb320444c29908a1622dd624459640253b40482dc622478100b20050602daecfa88668e04804132d9a0c886322700019f02d832f103108cd0acc122d73100106e8454410482d5c6646021e941343212d434c0e126c82aa96382d32044620a0a2c420432d1f4150a1130158a406 else 0x322680958a605434c4023212c81351807086091432010a4a8028c81a501031eb91505a08d8e9844031d7c120a7505930320031c2202ec9c002e1a40c31af028cd18c03811c08319197650d4a2678c55a317da81912526240c128316a324a4030028cd0253154202302478605325b313de5204110bc8e2982312870a10f110599410431148490a8b2a0060e8231025330109045028e8030f2809f000058840a1130d981e9d00e2a42d11530c64080762ac029988030b48018490d04804b9430a2628c02448c20c406308c82468193887544093077189806d26128408730637084507442000fa1304a36a3136620037924303520312847118898533024602063106804b021301000a3d0ac04b002742ffda90f1101930504402fe696b03708055007582fd411854804288d01612fc30983620200088c962fb01880202b03ed80a0))) else (if i < 21 then (if i < 19 then 0x34a40a2100e283380cc3348c84580c90391d1365347a4a25048018c2c02a34674200c4842855304b34540510b802a204cb143441a40680846ac18111342b852270602446a12b341c08407c20080d03083409870a0081c00f532033f508a4928c2288711233e0ecd308291010600733cf0ee00210860e404833be0009e8a01a0e060433aab13041304200b58a3398da8100885445220233858204035468b40930337016a491058712014c335561487404b2b662e933451004a1b104604a04332ec0270ad14ca18605331d142b04402a00a09c33063836422985902e6032edb34a038b0018687732d80444c6112893131632c68844019800a7306132b115450309102aa4d1329f0c02a384120558303288a89a34686f0a0401327992804c849009001232658250e8c12438082632500061169097e20318323a258a1c8c22642807 else (if i < 20 then 0x373620506da222d330243725ca2817a2000401183711509e8001642b80b036fb8379a15240d0051136e5aa30182c84018cf236d26640011a10a4cac036c010444e41b240303036a92e4434189980624b369051543a2963528b04367a6815827008a85e09366521d90404038271a3365180a36c825014b041363f1200a01639244a50362d4026547808c1900236158fd8210413d344053601418885a85432090635eda19c200038408d4d35d68b808474c705489235be23a04249c82d92b835a85514068f410bc09035944c421d0c382a2028357f23190990a1631424356d0c202883c11e8804355ecc014210222004683547112ae462288d109a3534091702430380a710351d5524e84835908930350912c811843a09460c34f602d8941228210e8234e482c10863c010225234ce2ca20ab440a14b0934b80410c2744d86388c else 0x39b118190402a640512a399dc29130081871049a3984241c899329b38960397344028c0908d252403960e000491308e1020f394ec08ca430030481983935c12ee831164e01d0391f21c984646a151881390c3224500058acb60038fbc22880584421188138ea18c00915b100805238d547155912908028a238c141752048244e248138b10c88030222e4010c389e16920748c182c400388bb0b2002588682a10387071080983193cd9b6385b264150c10790d026384b0c0990014a31008a3834997485616200850e38241011800550a200b9381232000326a085842638020000040e0d89265837e81572e15814a9a23137d4240948489f00526437c12104ad0742201c8237ae12c5005a025c24423797b08a58253041c1ac3786084150208a82612937714932188c0c381113375bd6420700748c3301374c02000ae884802446)) else (if i < 22 then 0x3c1c0a09d0c4004124543c09c2180991802158253bf70b882100514046ca3be61118014220c60ac83bd511080326cc0024343bc390840a415d1800513bb001442eca4401a3803b9934814318a03a97063b81ce82d084a0077c423b698c018848b246ee073b5b0400111022e80b803b488e889222289600213b380847404115011a103b2463208081fc0a40153b0d30ad5900aad003623afc291c5002614144083aeb08e0b601904801093adb0035208608830a483ac71e232004481439a83ab1135104a491ac25483a9d30186114891fc0023a8a2445d424250960103a76c45b440b08101e803a6343c819133000a8443a4ec58632800c038a8c3a381213242aac0681a63a20695424c542583a283a0e4320c180880072d43a0124800040a120c01639eb8b920d01e024106d39d54d90082191246c4739c31805c0061241c8c1 else (if i < 23 then 0x3e9b21b443953a8381393e83289a7660045355213e6cc0c0344f0e0c8cb03e56a308ca840c3818a63e45488d04080860c44a3e34414c048a291300843e2700012041b42049803e128993422424205c913dff0828e318898050073dea324450821384a4713dd6041022d1053730323dc146804a94152290783dab0c8a99a6222044e43d9d074801800032009c3d8a5880b1d0260094283d768c2b60080056e0833d5f102506834ac89ac93d4b44322001dd2043453d3652608878859a10183d23a087240012d026c43d0c19680e08d22cc6903cf90929a20570a20c403ce80490c14c4040bc043cd5093078c2011814233cbe4352641ba40720833cad50c083302a4814083c9269cf102898e652a23c7f04458452244603583c69e1808b502a8c408d3c5516aa1142414169103c4110a06463d040ac303c2d86242118b880b910 else 0x411b212c8504b418430341074264582ca832070040f828900c007341020440de578019f2c53002d940cd28b3a8620044110040b8818296408498742a40a4132148a8100d1439408d926a8490a88e4950407b3009c09084682432406285c7a03331911246404cc98c02083274a708403c3020b80062498030402984b204000e58482d401ac81108030c248c00400ba00209020138c1843ffa042210d000c3c1543fe44810c125131634633fd3c5018410021c48433fbba49e8af0008bd4203fa32a307134484dc88a3f8c826546864c9416033f782448680b0826a8153f606402412d3a98c13a3f4bc418001d00636e073f36830934838258058a3f221481b1421885124c3f0e30310422689a78013efe89160c60013010413eed2008c10b500f20603edc126108908b8050063ec86500082e2a045c623eb50280b3b0540c8205))))) else (if i < 36 then (if i < 30 then (if i < 27 then (if i < 25 then 0x439982882160041e0d4843843012e39014208d1c4370b30bf40800098031435e019600890e60a112434bd410800165840ac6433358e803a032a8517843230ac2010000c632254313464528020422241842fe090602d33089162c42eb0a3012484705483842d2c8222a8cd839159142be7206011ca82221a242ad00030c348819d10442962e4e052240a75608428344c0880a81488b13427020a44b65448002a442609a02000027024907424f3255084050440522423c253c0208910a03c142274a8ad4b00818027442106741f90570c2280041fd90102ba100284e4a41eb34a470a11c84000141d8a11083300815892a41c1b1060e80da04266a41aa51360a58608dc28241907246ce050428336e417e8152048101e018e44168104900d36340a3d44155143832804c208bc041410208554a218e3016412fc054324302802119 else (if i < 26 then 0x460ee2110c428041b81a45fc2360c2514083100645ec440c00c100b9021645d7ce818025fb00240845c484889648e108604445acac32631032490635459a0c18c02223481918458601f2548e0014182a4570c40caa0704b07121455d102044602da381384547e649180192512a60453548cc0402942c43104521818492a30e40426145112c618228a002801444fd1934100157a0830344e741680b1e01aa58c044d60287057c2310800044c4c4019118a242548044accca4072920580e174499089478c02640432444813c22e00620da1d2a4473008520431064090844660308088038200a2244512429599012488370443b015d940ce1551840442688809e18a40a40c74415480bd2120441180143ff2c4ac0084344693543e921503a2a432512d043d40212039d1d1aa03043c10c0411581c72016443abe00e44894b005a8a else 0x48790d83509190362023486540290698400ccb9248588003d8602000800548439858014284d3102e482a88870065c9992b70481440400e86d48d1b904808406012500860044047f00f0a9880e2a25a4947db5e3402229202424d47c711156151284c806847b511581130045d018847a29022044998500783478e04760217c1a58004477d40004d581402906a4766a38a05906241308f4757000800f91204a88447410001a1b05c4d8f884733808b704804100014471e8b23508d10b084504709821e62089433411246f820a0450100cb066246e821900921180034a246d21c8506295266640246b97c973244244b40c446a5a612033c41904c8046938282140641c81921467f94082306390030e5466f344012a40148a110465f8096e00040430a03464a0d552818421605544637c11010416ae0140d46222098412e8a0da412)) else (if i < 28 then 0x4afb000a1060414261164ae5396168045b2418814ad085328cd4c02549004abe22408a2c224360064aa6294d389878a114224a95542401134000a64c4a84a018c805148013414a6ca2a2344a2ac940ac4a59832208e094800ad14a497152051000010b844a36500ac600142352644a2708880019006238434a1605508410a010a0ce4a0101ba80152603190d49ee0e60824c8803c09149d9504060a8c34415b849c6d20c20185da0100349b208cf009899c0442449a0e004892180105827498b14111d0190708a534974608e626666044324495d1b28b2020711e4864948083310a28c11b8c849338214a501453a5320491f3a8b4ca890402140490da41c0c0e11900a0248fb9020a4325206219048e440ade0f1408e901848cfa171415a2003a52048bb52902e0e5540028248a845302841a02d48a0488e60c70f95aa482416 else (if i < 29 then 0x4d6550209829101851284d52041088a332d460824d3d00380d92700a8cc64d2cb01d0084408652084d1612fa03380c4310b04d042295500dc00013414cee052aae0c80015ba24cdb0400402c9eb984064cc9691204a3580040a84cb3ca8c01820564670a4ca51520081022c708004c8e0a01e074cf1425064c74a8b21e8710f030aa4c5f92026a44191830954c51400d46040a0220484c3a8b44c53171c308024c2442e8a241227406154c0c392481876021d2714bff25500002808a41044beb2b161e820441a0184bd83400a0c04502d2174bc9144080398030a0504baea5923d38f00444e34b9d80d00701220a0d0a4b8810358225204787444b7588217412038c08894b660105062c10b020604b544300c28ad90502404b400c2894a80b4a06064b3142407428020248054b1c1a459810e42c22904b0ac4a003614c401244 else 0x4fe1789991c5422b48804fcb2a53266202418cb04fb20a00362887ec93694f9e003645c170a290a04f8948e84141204372584f77a518d809001208c14f5ec0cd1cab2038431c4f4a5010123556208f804f33a743a040c70784144f21497100264a1120484f1562060008608202804efd08a2c14c31d9341c4ee8868ec122d34000614ed3130c9192d10c64084ec4110400505c0408784eb0aa8900142ad524044e9d7104184c509192104e8a50420511a88168624e79080254d12d2021204e63a481b18902c402ad4e510c8038e88606004c4e3a7c02b0511e001ec84e25a0b30240428625954e15280442048a948a804e006344a802450b28c14dec006412e4152926144dd961890193512028214dc888002fc0043a01114db790190090388244c14d9ca8411434c958dcb64d8a000460620d90b1324d7655280a51882ec004))) else (if i < 33 then (if i < 31 then 0x522e8034a61e80850a34521d0405189815c801225211054200821000242951fc09291b104240cf5051e9018e48244c02029d51d4b000506c22cb842951c4108048829835208251b39600e81a0404b00251a2488612c80610910251918594200c78060820517ccc011510c6686803516f8010209030880d04515987200324234078b35142911240c641e520cb51304048c088b103b120511d5e0400410d7055205107835f14a508c2088250f848818f018510001050e5980878c106a4038050d320900272011b381850c1912504498c18098050af04020c1095155065509d020d01a128491306508a20489034c3851a08507b18008012310822c55068c18058031861432150579ca08000a411090e5041a16660498c4ca0225030b150e38108102004501d3022453182a1e00450084c8a902f08a0484a4ff901101d2014266100 else (if i < 32 then 0x54a5d4640d08b40e0c0b5493c41c0236280086245482a700205c21821900546fe810026006998e085458142a454630388ac354415082455429699328542b4f01583082332486541b00492888411421545409a0a320003c0c194853f23a08d602e41d0d0253e108050060d0d0169153d2a5180104a100190253bf5800d2a81188262253a9e6440109a16274285397c3102080c642060d538410a148b00089c925536e985b10564d009106535799600e838a1c20c95342240c0c5b4905e08253300a811208b5924202531bc808cca92110286a530994108542b10402c452f7c01900247420197052e200d061246488bc1652cf82526008c3c4186052b9430ca1014912926752a8208105d0381260125296495c04261220148852821a0410e18270c6815270242238c542a20108525b11a087448a106c255243510312cb057500e9 else 0x5711da0334c1100818805703003840c10880486456ee222cd6803a00941656df610204162821408156cb0ac4a54084686a0856b848896b600420029956a30983825a864c21815692020302488d80146a567cc55a0b90502a081656620e0d8f34a8109574564f4048b9808086468a563cd20d94cb4040804056300801a00548c0044056231422c000808a0884560b43d6508e1844057855fb511088930814900255e36841c67008bb825255d1049410186323004e55c11aa08210150000ce55aab52342e0626308115594949aa05820591503557f21140aac12440cb3556a0630a355443c0260555444a8508c85a0a31c554201887d2051a10044552dc48d28702420a4c155204801002270041424550817eaa000c3cb602454f270c10e0e8290999054e06020090528b0230754ce0aca510d8208201454bc2e4101b1098100c4)) else (if i < 34 then 0x59760495891c98a504085962ce80310950580306594d208361e200c3443c593c9040a200280475a4592b020424020bcc10d85919100206c90d044a155905126788501312802c58f425138021201400ad58e10af40c200008a55658d0a030110210c2885958b81b18835e04c4942658a320d1588843b08a09589041104646f4030160587d740a0448be100340586e011e31109104042058568e889a03850c851b584448a180950442c2885835024112240c980109582381100c22056028b358130410e981080c2890580154200024b4c2660857e9828d809d107212a757d780401a486022e61857c331040b627240c04557ae2088002e829dc09b579712546862536131225781e20e0958558880625774180802108181120a57632a8020258280722157501420090b946a21905739b426406532c5424157238538740a4b034482 else (if i < 35 then 0x5be22f326408045050085bd413b35020804000405bc403464206a10848045bb128c04801848bd2505b95615508b3c0373a8d5b7a54950f19a12ccd885b6444138320726a106c5b5102002210cb1a54b45b3c1831060280253f435b2d4062008101b030155b1d04ac401d242100505b05c294ec2e38c206015af0014d152a1412a3c05ade0001d0271c0c49245acb1a610038401d35025ab740d52a0c80111b115a9fa120e500b10eaae45a9002008b21862830025a7f08500904e94128c05a6b0500b03a4544c18a5a56081d51a138c388015a4382c00216059454195a30c9800ac59880084a5a197222654600a52b425a0b088102902650402259f70c03c89903c3024259e24c2d20a04126219559ce48054310500ed5c059bfa182105c8010140259ac0826462152080f21599956502880192e10a0598a52c1050528003002 else 0x5e4b14e0048c9a6042165e36a087411041603e265e2294c1af110012404a5e0d04a48295082dc0c55df90981f060e1108ca05de629021443d180182a5dcf9048474420875b945dbd1a048998940221605daf0090211d084006885d9804548a4993428e495d86240892260ca984105d7414524022a2004c995d6a00841640420800025d57a04c2d88400b02865d40504b9881ad2053425d3088007015823048245d1f044118b8101060565d038caf62223a860de45cf405004028a1c130225ce08a236486118828485ccd03308a0c6011a9445cbb20881b0800b945145ca806c030909243480b5c974348802144340c905c80a4a2c1215a4e90885c6c0d5110240ac691815c57aa841a4d020c83815c48140a8816810001615c35246908450a10c4625c21c00905a87a0552015c0c0315a4f2051020d15bf4a838e01362410c7c)))) else (if i < 42 then (if i < 39 then (if i < 37 then 0x60a9e19448350840869060972009831ac1c1041260832034346c442530426079015020000892000660634c60c738810235186052801e248650907000603e5b750010a360000b602b042271d0200e94096019a40012420f84c025600061225c0a12b81b535fe8123008cf1c818ba65fd9200001e0045896145fc6c1ca1182c11004c85faf48109aab62648a145f9901a4237140225bc15f87360a9044018041335f740a1068e29800a4705f6224146512242808525f500a00950430a0a62a5f3d4b1d0901814552005f2c429400800542c0575f1ca00810c3040203c55f0890c2f4024c1131045ef29b850ec00fa082085ee0504a2400a41ab1105ed038641145222804005ebc8bc09088701700465eaa0a700e323108c8005e9735004804262991585e870ad00032490118115e7160b30882de0198215e5f100c02c0f4181262 else (if i < 38 then 0x6309620481430591302062f600e284c50270801e62e4a300d11802a4704062d15c900e0ad160081062bca4330903020703f062a61f18022e228c1ca06294c8a6120000c8a4c1627e062a0813dd225310626c0284de0021615600625b22501898880422c862478a1124c0a3486c08622b6585b1e018ad87a86219118a020cca40510c620602e170000b24b02961f3140a48c1a01a481361e310e580102091604261d30200c4025b8144c061c5110125802110829061b50d00220058035415619da338812aa612d03261920063400200088109617e234c45524108e18061665c28dab815193008615d0480280081402040614c4cc0a67062000101613598015a85320b0d8c612380b8c6106b090010611208113c04142485216100c52421422090123160e6022cd850bfc3243460d0480e452330d210ca60bd12910108345e0509 else 0x6550443c103161706303654004204324120a906865303328005002015431651b8230488f910514e0650c80080a0411a060e264f91841124d11b8002a64e608c541864106640964d241988202914084db64c0240048c332210b1464b3801020564004250864a0426320601d8125806489004e860e65a858c4647610078f00b8b80600646402ca0022e1d14440645182908903130845d0643a2c3d5b2012a41068642f0800050644180021641be3020a08c1549221640990082901c0b813a063f2706450a024eb470463e50808b480004428a063cd94240b40563c628763b81921b2860802c8c963a9a81100280c06090a639920d10624c6600040638a104ac5088014a10063752e01543830c2d50063650408e009202226236351422813c8d4060419633e25106ba110091940632ca44225400c13400d631aa213026400419298)) else (if i < 40 then 0x67c731c2244c900ca10067b07428cb1a348108a2679e1c814800324163446788ca159092b181006a6776808c32a9014024c467658102520056a108456752ac300040c5590909673b02f4246f02cca011672b1054a000192d408267136e0184d81e62310a67012554a8820944220166e8c6552630e30c4a8466d70c20c05440cc102566c438a962408312212066af9241108649e038386697550ea01c680520b76686064ad91002020360666d838860aeaba114c4665b435c0522904404426648209bd90050408894663780002232c403418e66290844000800bc80ca661656120d08602e0141660162c285700101716265ee28c10c8c88021e2465da0e291800c322421b65c4418062940ca286e965ae814b31406c90013d659d0826420219718202658ae40e0990a088085265794a8540c506401014656629458d080a403023 else (if i < 41 then 0x6a2081025035106640056a0c187520c24302444369f88034a0201e6ac08969e1829a0260045fa48d69cf22e060800a41972069baa430cac76812030069a500a3414d168a24266993004e7083001428a669810f8090518020c252696d2c3808712c4c1280695721025644690c2c8d694163f0040114cc19c269340454001130031900691e3a0c1e2800c03738690e000850224123286c690080100ad84244800168ec5492208604c301e168d9250375180842011668c5d0072462c8108e0868b241480bc01480330768a300c380900380821c68930911a014501602c0687d8b218c49a61809066869801c63a50808521568533160832ea004f82268440382640900490441682f84126113b5821244682008205bcc0880c000680f669344051240202067ff890c89500020410e67ed212e20d00ac4050467d908b1143004dbc801 else 0x6c8fa269006062d001a26c7e80053a88418081986c6ad3306541300520066c556e208349302111346c43438a008030c24a466c2e85ed2002946a28406c1d21185312000999206c0a156901028408d0b26bf911840c29405421116be73200a24c7030e0206bce6c2b0c59918950166bba864021b4005270276ba6c02015921424aa896b91d126036340a082456b7e08a27218269604206b6920362c414b8901d06b574574448124b008406b40524498103269b5226b2e61c5c412181000436b1919f00c42022602dc6b040d95414406ae0a206af109c0c324814c5c006adeba0222a4804033426ac9254407109921d0316ab34aa802750c9900566aa10103c188a84448616a8d07048c696208c0926a7a511c08132202cc146a69214081600f1409186a50e0a63609159130996a4320080496082980026a312a42920c28185240))) else (if i < 45 then (if i < 43 then 0x6ef1726010ac0a0356306edec297002458000ca96ec900d41b50b25603086eb6888c0121500246b96ea23248351208452c286e9210810405874032886e8036080482113981a06e6e082c0400a511c24e6e5e09542808030034c86e4a1d5010624450258c6e36b8b08231108b10a06e1e8d38232ce849b4006e091b36224601c8880a6df700248057c80788416de678040028060354706dd243991cb00a2226006dc7008c0880030088846db0fc299850082a03616d9905d1200a0e8e289d6d86504612040e18126a6d74850080c8b40421b16d5e344840098943a7706d496501618281a54a486d351289163070102a546d2161b68b0104a1c0046d0c8ba08544c68a41046cfc1014586080108e826ceb80168007083590906cd9300e0c280fa1c0006cc841c8140023415a086cb610f029218514a0026ca20d921080208e51cc else (if i < 44 then 0x714f9d0fc21044250415713c252a30400e9430187126111034e24571007971152008041520a542d17101008591503868760270e908c66908d344746470db08108a094012004e70c69d210b416c20858070b6801902188249700470a318a064c94084922270929018e0940c030821707d4481500d215a2616706d648e48040391080070575b2c1629155088017042340e50023c4a888c703282811100ab105028702222c5028884c40110700e044ea211c52a11406ff92440c25c83aa82426fe627409988509204246fd11e0425e0700644436fc341100922288490016fb00b007400609f14146f9ec00002c249019d616f8b9018848881b052516f7832c40c210688811c6f64090068b07a6520066f4f082430b89450a51a6f3f092b1021084642406f2c081292388c0e10856f1a8ae14c4610d000806f06202e60c0918c3103 else 0x73a087064302cd04402073920086016034090068737e2082143510f1068a736b4a419700e0204d08735ca5221040026040d07341014a140c6bd5709f733340140808861009687322470001d991801082730e14a605e19990240072f8490dc01a78834a2072e7c2c910034510808472d62080a1c34464060872c50328d002c08a141172b0318140ac9e208c11729cc1568044141db2007289486e11008923401c7276288114232a5222417262151198400012cd4b7251600a892404401871723b1220823eea90a02572267210088a06c8857872148420060e209b20317205024302050880374071f4ce9611008802104171dd97202582102ce31971d1281092041008408871be054220528902453371b119062040c0201088719f13200919511218a0718d0081d8440219214e717228838c9ab9145a477165c620000052206280)) else (if i < 47 then (if i < 46 then 0x760508100c293250849a75f2050441a43042473875e301198104041894a075ca28446c610de1368a75b8240e22914400499175a562c1110481a8106675932150c98e11034800758090442250a2124741756c9c0570b02a00830975550231d7442d4300277541214028c617a48250752e260a0c810800dbc47521060600090290c120750e82067000e04118ae74f9d80427a95028229074e9181008a240a2cb0074d409f3e2544900040674c29b0044a98160118074af22742804d100aa24749f20050a90196a100274880f5d9482404210ab7477868508800250491574617cb460264081442c744f9192010424868c287440e0800a05002122327427032a265b0d8081f5741940400c68091a210074074044852033a2148173edd881008be63c649573da281180531083c31473ca816042204242348873b20b4462ae14a89a03 else 0x784ff00300cc1e41a08078440000620460050190783406211100025273107822681b3800018462427817140021102110004378055129005144230ca077f1247024322218193477de984430065a8500c177c8126ac1043c33908477b1488a59553010570c77a10500992332004086778d47b808e9043800c07780e10402d2000808207765aa8b903a08d7e02c775459e402c0401500907740f0204d41a130a024772c38681100a6a2700a771f2005880123014042770f04049c8824226c007700900451220c40820c76ef0ec942008800313876dd610254248a480e1076c6a148210ca4bb885176b912008c651201000476a0410091aa4ab6326d768e40040e82e0248952767f0c931820140cc0007663ad61055c42db013e764f008128e103081f53763c0040a714b008d252762912049619354012067617048cc88520216608) else (if i < 48 then 0x7ab340988125510458047aa280e0180ac04e02847a916496aa22240002807a7b20e265602704c5227a6749914a09952100987a5410142201701989a37a4024409c10208b964a7a2c445324ad2106000b7a1d4e500102c00207107a079c38a2401c8a52a079ef9729742a0a1041a979e1088160400130232879ceb000a8819106321679b770af046c0290505c79a60384442892a220c0799286588451a16840817980002e822622431444796b0e4881264b08c099795a49860448590130407947e0060092b4153101793660a0570481508024791c26d5681508340e2f790a889803900320c78078f680039a301a8d115078e819000400ec52401078d9602124010008a9a278c2475ac0cd0019491178ae1a02c4ac1048d442789bac1c0802f0c21802788689d00011254684c7787045804b934024067c78620820010c20084cb8 else 0x7cf913400700890a50317ce708a12e66014180117cd54022c640380a19427cbf40e8598113c0510e7caa84040c3e58c02a837c91cf40a8b07608a0ca7c7980b092c544a91e897c6d8042021404411c007c5ba026462e002088987c43a25468c3a0a329507c36280182400a1806087c24268540034011306a7c1200088ee20708018e7bffdd1410044880982c7be90c110722e2d069287bd7b093428e000089117bc145406616400ce3c17bb10800d0951003a2487b9e8515b010635402207b91022080c0d20244807b7b612450103829c5657b67039a41304d0099907b5a30000080836c02097b494020080acc04ea057b3612844b459d2240007b260001141ac0a244457b1216092b61901842057b02740c0124280992007af7041880062000b0017ae5412148ca011520587ad5823600ca001281217ac442080dc80a90200e)))))) else (if i < 73 then (if i < 61 then (if i < 55 then (if i < 52 then (if i < 50 then 0x7f4318c50a84203953127f2dc0c04c345982428b7f1d80c080b0c10204557f0a14018024580b8e857ef729208428804f180b7ee202c630c80cc504e27ed16426405030044b047ec408064580214002427eb264110d902a1400297ea1020c06b0520883827e8b00a178831460c4dc7e7b18613008cc8130007e680a1512250b1422817e57b0708a10408a00157e472c040a080841d4507e320a4071a631041ea07e2215900123003888067e0d6890e21412041c697dfa9888122c250980257de9c236204890d800027dd3b2524853402872127dc064a148800e8886287dac414700a149a448c87d9c18a0142140102a897d89a808999204c404647d7984400102414624a57d65221414084a290e537d5441148000518ab0167d440a04824c12c081247d2f0500288f038056677d1950b024a2822e28d87d0a11850bc002284100 else (if i < 51 then 0x819e8426c0204220100d818a007ad114054831308175826442405a85a1838161c0006a84248509738152180c50000408906e813c8899d18ad8422440812809ac0700f65208018111a51b195410a0834980fc284890642404bc2e80ec506112018490007280d86006808f2414a81380c538440c1c0f20824880b46610113c4301000a80a404a0af2000446900808dc418c3041ee043a1807f1300201e401c0018806d802508c310708548805f120420c808980a04804d048a04c810726510803b20d4111272401406802c01202010116862078019258220d10484038d80050dc0e070889a80097ff0e9b04807821410627fe016108b14490180807fcb0e2513ac832145007fb9425c810701a320407fa4c129b083a22244097f93042a20071600c3187f8087080464a60240937f6be01018428911b23a7f58104a434850a32091 else 0x83fa40000f419411499483e7162689402281464283d80a09c00481844c8083c2158522e0211e845283ae409b89425482d004839828b81268e9014921838612022086807c2c128375404803823c3060a083617000c7100ec0c25483500c0c10284b12424483445b201d0040000008832ee82213e106435880831b80d240386045c0a283088271420099210d8182fb012804964180080282ea262113101511005882d86100e9820a000cca82c345440588962e608282af980b3844022102bc829b1022f620405c8434828b20c3240801883a02827b8104a44510982820826648a0929111a1017a8254001084a362562284823d5f158602c1004c59822a0105911300c7065182142a78811a0cd03908820083963803864080c281ef212820c4889a0a4081d72846c431bd29641081c2e90d90a84122142181ad19a91051201cc30c)) else (if i < 53 then 0x8635080921001048821686242000a230448c01798611911b8402085104a68603600650020b800a0885f050124382b01141d085da32211884acf2840685c8820934364030540885b51c40928b9520824085a4018c32850ea50000859701d280680008c10085860010022e52c121e08570b4100c8471814393855e006884042789a308854c0493219018102643853c8481191272048800852ac006282624834c208519046140508ed00d008504384004e60a503f2084f2030001095c25334284e0004088658d8a824884ce8c10003c11846ac084bb543882c21422600c84ac08062184300a1130849b9018001645032582848a8054242900291298847aa21008c60804e240846900288d4183409620845b8040051122850025844753113a129014088a8434310c20e0460c910c8421000b262681921819840c1b11182d40282da0 else (if i < 54 then 0x88873b704c86032884428871170c42c3118c0aa1885c06e0820436516138884e04040902b8821060883ac22c2c082012831b88310011089400080028881a194816428c8c7588880b508210e00d00a10287f9410082001932a98787ed020054500112006887d70898602d711258a187c4513c95021660080187ad4ca081733862061c87992ad03044e0c1202587891204102d411812428776c446250f880820608764020894c0b511112487512e020500d391400d873d58298a21826c080c872b2c30504020aa1548871327a305580688698c8702022022a808d08b4186ef6014a19a0187821086de12480421284b122486cdc84c009102c2684086bacd908b420048c01486a5a41e48a11604094586922bd0601601142424867d43a20a28864915c08669145a8094c422d00386552cc402010ab2072686424a89993062200822 else 0x8adf42c8858610e428408acb068dbad1201240408ab951001103080193f48aa806693000801149a88a984a9104a4482804028a8326624c498098a2128a7004a0803c01e1a2548a6101540008c19404618a4892218243657a41c98a3b040c08800a0816818a2a8028740840070d908a164805500408f49e128a01415aa8d10804225589f0048405c51400103e89db001b042b20c72a2c89c8d94484a0121c0e0089b4c0044122180543f589a408a88022a6902082898ee1463241d5008cc0897a8508491f8104295089660e29098c831080748952031449049247640a8943c280027220520003893741a902010020422089202c08c0444f188c3b8910f02040050ae0840288fcf00223000928ab9488eb042900619820261688d565463812c852228288c810858040800c410988b3312b419264244114889da0c8e11040c8f815))) else (if i < 58 then (if i < 56 then 0x8d2d0600f10c4b97b40c8d1a1a14400e847989008d00b44625d2388662838ced30800f211b1104328ce2a4400812021400208ccf4948361085004b508cbce000bb24288c00858cac008880704187001b8c963a004803d85c33a08c84c070a00834045b018c760001832004d802168c5fee41a10a30603e088c4e04840241f060460c8c38053861610022ce748c2833010704084d10028c1a200314c0412510088c0a61180c04099900068bf532208160a730c5608be90009040900c408898bd4848c0c70524062958bc3c1181280304309308bae9050142069832cb48b9d0390308a942006188b8cb2204504681001648b76400f194090d2a64c8b6380129d91210018aa8b520845a982520220118b3e143300d12e2648808b281442b6346484c00b8b132b434829108019398b01b6020a81e00720108af214015b900020c102 else (if i < 57 then 0x8f9448a0560d2002026a8f83a60e00093054040a8f70c8508500e60c4b008f5e4128da00408445258f4e0011b20a418311048f3d31c20e60922002408f2971684110051610178f1704024a48304a64328f048200a92c202176608eef4be9204101328e048ed9a8121a520c0785648ec6380086002652dc818eb152a758410830a8228ea001184c01242583068e893a4a095814d125228e79041e1400a18118448e6800d19018162228418e56cd2a1014200b01888e3ea4286710a107e4838e2a50050a2ac58808e18e1881424092403900d38e064001830832b091648df082984588aa5116058dda10601cf1020acb438dc5480261473a0c1e108db381824170075110098da2402034c086c0a1128d8e3310c90854028a468d7726238281336914648d62a88f88b408800ca48d53481c9008510802488d4588b280004002840d else 0x91f0500008211265008091dd98910056200d842691c942815ae1434c102091b544142642209aba0291a16cc10c003c027508918e0083d10760a018839179980982a9f11001159165e105302020c61d4891520482436a20cb000d913948d70887d0d0227191248316cc0088210bd2911026ca44640008a43c90ff0311b0928030180a90ea81440a934716849090d8240eb804424a120190c6b13201104a02112a90b610d21a2084c1080190a4a0220456200ea203908f74284c8438298148907b0885300941540e8d906a0001b1d236040d009053e902e1412423187490448101500288856480902d894360449568289a901a1424445a84244161900b348112a008a840108ffa89514801080030e38fe84608928a700824098fd51407034520845e208fc29060a510048915298fb44940204c010030918fa6022a08811490a004)) else (if i < 59 then 0x9429900840c028180800941a62055208810131009409611280bd8200480193f942402018a02a450593e881001a015282143993d32e288340c90a08a593c1ba1124205460840193b0811204546c30200393a00e2000d82320430493872898dc23a3f21402937391102c119450604b935dc10549532805d23093479aa824124c5600a59335316524008109124a93218400e74824843ac0930f00088634844a456292f92cc22c0d61924a0492e501782022106ec88392d640815052100e120192ca012000040412d90192b868002402d2b1850892a65206494108034a2192943a0c82c00c50061492840181148119e224009271416400724718c018925e942240250884458d92510822800ac1180012924200d0248808191411922eb0484888cc0703a0921f04c4140900c03054920e01545082a183006491fc028c82ca0602824a else (if i < 60 then 0x965e53000590425aa08596500900024402cac090963d0682111425121127962fc920400102c80803961e2244088009143166960f40000c80b843025895fd4e1941106881300295e5418013ca5772261495d58880938010a108c495c3a528704c0450200395b282505a80002093a895a4006000da90838040959548840298a01081129583e5413004d01600a0956c45791828903644899559280c823602c14d209548a04187000584381295310260744e1538aa6095220722281260804801951248081180b101124a94ffe2894421088620c194ec02151c221070c21694d541ad0b234409c68494c32c1a8416a040c00a94b0414470459180b84094a082600d80c0122830948f1c0b080c02828704947e4a1051ac8825008094698c2d2151214a220694564830021038468f11944981a810000501003694341095608292b10658 else 0x98ad49210084c06023099897802643197026a0a5988502491079b00a4048986c2a88a595730602c698581b3c13108108621898480430624414610c40983906d00300e200c021982712066a004190882b981852100805088062259808084b18010d08840697f5e44aa0901191500197e444b104610420a90497d6140528002808906897c20330c72001827d0897a890b7042ec84d9a9097948240ec1e740090429781064606b100629228976e0d0411858b10460c975a0fa02482454a48819745918b21c2144b0308973088ca4020234d083e971b40220861cb41332a971224100048000c08409701520595451000402a96e9c21acc822393202d96d91051a4190306014096c9842500846a2a040896bb0b10460604408c0096ab0012720890e12401969810220e0e44205ab09687622811441821402c96710387e190d9040c88)))) else (if i < 67 then (if i < 64 then (if i < 62 then 0x9b0f0a073421b894420b9af61ab08742626c241d9ae4a0b1c24020c408919acd3641b10e06cc08a29abe00a700cd411000509aa9a75680128182a3109a95300690a00d9340749a83805841a09a2620419a70091029528418aa909a5c950cb922162800819a4c0ce000224310808e9a35da344c240e0c150a9a2582028f0a941120009a1514880831304093109a03c04505962064020999f38c400290052c208c99dfa48970006064d94099cb1b028200a9c3410b99b7024520818a5ca43299a56108c4c311201980999240098e29028ac430997f05890402c0335047996d18148160212420ce995514b88125448d589c993fa02242708942f423992f61003e208408a220991b91302445509a0a06990c428640c10c81101098f7a110b905086246a298e9408914202014204a98d64008f8a50641443098bdab435468c61410ac else (if i < 63 then 0x9d5ab182570aa20428a49d4702550865104832929d3412502406e58098229d2802050110011302309d104c12888ac93638619cfc54182022f440064b9ce9d1260881084e48a09cda0051c104e61008209cc520633a0b108c04399cb551288094210920829ca54282c8401e0021069c8c871b489a51412ca29c7b86a40408904244949c6a5001100018c956e09c570d82a16a2c9090009c4200c032485505b8789c2e011c80c5842942559c2160010000a82924489c0e628905a0131012a29bfe18652580530004019be6382418564625494d9bd210c3b110811608ac9bbd01404c2d576401619bab000ccc0aa190a1229b9b38200518140884529b898d943027001402609b78431c8b10242020419b6a84984220248008849b590118113c260025069b4729840840ca290c229b34c1668000d03200e39b2504c6022080d88042 else 0x9f9c0ec100d00319f0309f8bc500c406a2800c219f78804c33934110a2809f67098140100c46813c9f56ae20c468060810209f416056344308a407509f2d020c8c918c0d11869f1a4a6c044801b8c1089f07011ca00a82a630839ef60a8088518214860a9ee564014825442204989ed1840b0320a8d530059ebfd3405020480884339ea5840ae7c20cae3a059e956820009405d0c0489e7f038809a4689152c59e6d03901c81000227d29e5b381708805841102c9e491a004128c38151149e3838c20080c61132019e2042764e1128a091c59e0d00c813b025ca44029dfa0c49882889054e409ded422108a8000e80109dde4191211200ca10409dcea2201254294601009dbd08003407034904699db424220102000240809da312c45044006172109d9209007032831064229d800c408883450c2b049d7094128104428208c8)) else (if i < 65 then 0xa1ea2c35f220182b0099a1d713420430404794a8a1c501a0580c8a141c18a1b434202f0309010130a1a6108118408c894008a193e2d020207124440ca17e06a5236040528711a16a35292054200488d5a157a6200214461c4087a14503300880c7942418a1382042414320042060a1272004d72890210068a1184bc0818450401800a105c920904ad140c204a0ed34366380542212bca0d731f0110406994495a0c39a432281052105a8a0b2e0060e101020d260a09c40c008c1ab68d306a08a86861c2182040c0aa0771ca9120333104102a06314834a852808d034a0508218c01e42026588a0400243106a05400452a02c4078210845302935a01642a2dd8810c34422a0070005490880212e059ff4900c95b1104409069fe318056a900020c41c9fd5100000004853d09a9fc40a840820531882c89fb01322028cd10d0036 else (if i < 66 then 0xa435445023480980b842a42120ac491c1521a050a40e4416f0052900444ca401112909020000a482a3f0901600640660118ca3da2a68d408824d44a2a3c621a03223c4700309a3af1430ab14558e01c2a39c5a81431c06321002a38c00570132c0421c00a379c60008b0e246a082a367049303e108091015a35128e2b100a3038934a3404812004a0da809c0a32d0440454a2ca48252a31e108e520093400208a30f82404411804114a2a2fe15802262214c4300a2ee6813900524880021a2df041192100501440ba2ce8a60460651042041a2bc3640a0049d008251a2ae424001480902a442a2980c1091106ad6422da28208900ba9021a4d87a2714424311004e8c300a26020429002a44c8918a24a60c1462202bc223aa239402e08912080e242a2280a6040211402a30ea212ec991504a0624c20a20188540c8320524084 else 0xa67a09e8800862208648a666609438a112021a49a653878165100a508501a640a00134a683682500a63040006181c0269206a61d542e0a9080407214a6052c42d519a2203664a5f200c18a23141c0951a5de049de0551a0208a0a5d32008450221801002a5c41201402205940c28a5b3230a890550100944a59e200e0968a462125aa58a8286051a02a10a4da57743cc09820628c480a5680d2220021a485100a5573150003c2c8c2001a5450b800c610124910ba5305260821304bb3102a51e2062858098580642a5060740f42a48456ac1a4f5401024986060221ba4e70823080032411148a4d318026744ec021414a4c4a100108804518072a4b1a118a304c0085886a49f060c8ac811202056a48f4019a02542330800a47c94d18240c30a0502a46be110087404050445a45bb0992000021809b0a447e8342080c841216a))) else (if i < 70 then (if i < 68 then 0xa8cef124160240699210a8bac4002853a404e192a8a6684241b10041133aa8918b441081c2f022a1a87f1144043b42220047a86d8c813a4140824608a85a10620664808d3086a847308000065989aea0a8397320040840042940a8255845828419722440a814025a201849421824a800160c9ca2020a414ca7eee003189232080505a7dd93c203042c084108a7c818047c239e90a010a7b705128049200e1194a7a63001112404b83124a791c3c9883202251086a782841901500002e700a76a0030ea94700f95b0a7540369505008932c96a7412a842007d4400938a72fb1060b02a5080203a71964a84874b0418628a703229d1115a0604a0ea6f058a8af0201106050a6dc40852a024660485da6ca0601564c85128820a6bc9010008107940908a6ae801e010868043001a69f000010a8088ad560a68b4897c10121f10005 else (if i < 69 then 0xab14000410ae0007088fab054290883011382100aaf20d0902c2540c8688aadc0c18365001da190eaacd10840e404d248800aabbb12a81c400201186aaab2008cd480098a042aa9a0a14181613004c09aa895c0124912140a880aa786481810058650a08aa6610805426c60a5005aa524110382988c085d8aa4200180b546004c380aa2a0661c2c1939a844caa190905882928175000aa0613c42148e0308602a9f17992006172485180a9df82816026e2142402a9c8c901620c162c2339a9b5c008801b04ac1a52a9a0040008998df3c428a9906a060c8009030c80a983402c0001b200408ca96e308f008226458e84a95c2068955a00122092a94c1812108143612201a93672340a1c4c247060a927524203881201002aa91b0280209800851081a90798201d18b1020e90a8f498b9824100890e10a8e2a0a0614c02502c24 else 0xad5e9882101000004c28ad4c190214814415224aad36012606c7a10a6a84ad2032a00d3c28b09304ad0b44880c0c61237c42acf78218090bd04ac980ace2340590b40a245270acd38021a00449151090acc0e812308c10c4b400acb10026058888080aa2aca244a448600418c004ac932948281591200020ac7f1205b39307082104ac6f4024180604c70809ac5b216050104518b8aaac47e1e0148a82152410ac38126c4101400940c0ac292000d008a1481650ac150e92c1922084224cac0441e9018090026045abef2d14c08628299c01abda13c1200e8644c08eabc850532400d8690028abb5240a26d000250353aba55c280004048a034cab9a2586041102000040ab85db009448a0506849ab770c2408502a820110ab602758120a4d0d40a9ab4f00f010ae54001881ab396028e05895922a50ab240a8050451623c62a)) else (if i < 71 then 0xaf95122448810d107050af8268008c128af1020aaf7245301e2011064400af642819130420605000af54003880408b00e8b0af3f0005760600853b39af2a111e600058a58217af1e400c80d008021060af03e40eb4295a420ee4aef2420100b09406cd04aee24015034510685800aecf0062933882c31401aec0010008290d1092c2aea865744d481c2e1102ae970480831087601528ae82260440b43bc60882ae6f82052ca024462311ae604409601204821481ae520003034408c1e100ae3d4bb000ac92318380ae2a241801da38030984ae194243d2a184210400ae0b4002043108f00241adfb08cc1249e4004008ade93c20300120068dc8add534189006c48f6002adc580c20067001404d1adb1a3448d90018102a3ad9f40ec15100930120cad8a2e42b00180761e08ad7ac180850004288a0bad6a010b60e028290204 else (if i < 72 then 0xb1d300189823448e0384b1c23810a0042c08190db1b360000e2044110961b1a1820880125980d185b1900464538004c0640ab17b49d8612c001322e0b16a88c1084214428511b15a200c9220088ac0e0b1449258653028018d0db131205046448f153010b120452821939000a110b10e20e2040c26c0b300b0fe4c8230302a040a40b0e9c20011b8d5422c42b0d6308e43c100c50920b0c30168043224483ca1b0b10384026d005810d8b09c255e014560225310b088280492498c81c452b077c146088408634480b0694850a8a080600300b0562484617010cb1081b03f0c62a4528289d909b02c01326e01050c26c0b01d0100c45a04111013b0101a2044e100010024affda155093898820880afec9400010b64502849afd7c110c1902e065131afc70022e32848420188afb2b144004706a081cbafa602582a8011002004 else 0xb41b861005440db49204b4054009033900fb512cb3f1a25a6c02aa045020b3de5450a50a860280c2b3c6d0ac035534cc08a4b3b404103240c210893db3a50a10482911800628b393130844c0300f2205b381084108849841e434b370e20744000822300db35e08d090a161424092b34f140010640e040ca1b33b9d904140c1045119b32b80c128400380a4c1b31e64000600c00050b1b307562312640143a474b2ede4c9189e81227468b2dc82281a2100604147b2ca40af48a406200848b2bb3153100245000118b2ac3800146013550200b29e60100c0604218141b2902203521c04801040b27ba3584c8002a4182eb26400f90ba2d10682c1b254d110600608025130b2430a020268281830a6b23202d0320403450c09b21f860a220420b25063b20910c215c9289a0552b1fac300290020306086b1e54509887853504144))))) else (if i < 85 then (if i < 79 then (if i < 76 then (if i < 74 then 0xb64e08a80703734c4094b639208a83213a008f51b62621089510808be103b6150080702a11a014d2b60a0060025000838041b5f91602c10c93428100b5e68309010282734628b5d2c2001bf100004f98b5c350020900400e4469b5b4210322120910c011b5a6b182200851801800b58e15104ac6e03628c5b578300f845888c99602b5662b40118022a042e8b5598270850010188400b5496c26481240004814b5311a90b50ec04b8194b51e7014488a0a81a418b50d9102601321156010b50118400050082a0540b4f00c82303d02341002b4df0880824061388607b4cb8592d8c426040508b4b22468856c690d51b0b49e0231422096e00798b48c574c810144822044b47e0041924919520000b472a092140848020002b464802c24000420a09ab457980a020420254400b4422f61d0200281a01eb42e68120a4742212889 else (if i < 75 then 0xb89c10710c481a910110b8875054e286090dc300b87848a8059101a00240b86307c4c81843e01248b854508038a850008019b842a001596212478200b83218836200e8085800b81f32e100210cf010a1b80c050c081a44819946b7fc22860e3081281200b7e80190199bc3102064b7d90c90a24a00108c40b7c8b400110240c1d0c1b7b3904b55102006983cb79ce0b3508183252270b78990106d4121281071b779020250ed18006028b763081f5405aa2506a0b755c2080ce005000308b74340b12025082301c5b7328052412820948503b720a221142d94010058b7078256aa09108ab1b6b6f81c01d9a880800008b6e04605442471743c89b6cc0810905a2564e20cb6b8919c09600ae1c008b6ac1221117000800c00b69339d0668186140f1ab6810566880159104142b672180408a4a242a010b66324404509c0061880 else 0xbae56305c8100a6544a2bad106d41130052a228ababe258a90022005d04dbaaa2300902c04895c17ba9b81902841104501a0ba8d230aa10400308006ba791cc156308042031cba670c0b04846a41220aba534981985082304383ba4001089886428d4948ba2b0c32065c2a01a183ba1a20112022c5848a0aba055072430e482e1011b9f4608813000281c664b9e50d00812918c04009b9d4800c044b30024e84b9c12080ca1154084e8cb9ac19c1e670410a3020b99d41041e6480308008b98dd060405481300a01b979066388b004a17022b96304d348182ad24423b951814813b011006942b9420110424324018234b931a62a211284148400b91c1032448893d80958b90c1032098e1024a020b8f9428e091138483012b8e92800ac00000622e7b8d30cd4b218060ce888b8c3642701300428d000b8ad1f489504848025a9)) else (if i < 77 then 0xbd2b0431312040090c16bd1b41a3404018602c20bd091028e204443800b3bcfd10a8505000800302bceaaa501c80b9401404bcd847e0830154180009bcc608199086486c0301bcb6006035600182450cbca58082028603880d2abc973460898008830010bc84760447009100d058bc72084a3520018026c9bc6308180ac190044211bc4fa024710542690a24bc3bb1a25016088a408cbc23730452a04e6089aabc10c20a869815010053bbfb380084a82b53105cbbe44601c529aa04262dbbd150810908900e2c96bbc00c01c17060421c80bbafa5180208200aad02bb9853102280403cae5bbb86802482db01144821bb745686024814504142bb660618298402200884bb4ed01d2f60c5440b10bb3ae8802192026ac260bb2914ea0604200c1094bb1ad232004184800842bb0b4400845851152010bafa2829c4012a885010 else (if i < 78 then 0xbf6e0ce3580c09524410bf5caa00350723c04004bf4b060130529422a808bf3b180100a070651828bf2c8380120200c1a0a8bf195841360002bc8a08bf02e6248c104118b943bef2600301c88480201ebee30008e1001a417220bece8f2508a2260241c8bebe492ae01018810060bead80c1020cc7462020be9498304caa14811fe2be8700180813000143c2be7a000240343068040cbe650101c928c9175083be4e0c31aa1b62700891be3bc194a0103c0841a1be292222461003c44d20be1432830e22808c9d01be0311488f1099001240bdf45284406029200052bde50006200770524024bdcfd728308394080c1cbdb8450e70642c240d25bda7204a50248a196800bd92406318090ce12691bd7d111228cc200e3351bd6c388102708010e422bd5c4682800882015443bd4b100483e02108e045bd3b842808a022451910 else 0xc1ae0008e80234a09458c19f00c84060044d8007c18e080140054170a790c17b520a448ad49020a0c16a00221001a2f8414cc15a2a14080d40826880c14806b9011a10580184c1338c9042a4104382e5c120142871300580e8a0c10f909006015110a4e0c103e110aa4021000000c0e96a045480337bc42ec0d6460d24a480a2044ac0c500d92c4212440580c0b72024081012c4408cc0a50d10104c8b062086c09250250428c89c3202c07f9458014144b14105c06b0a054790b20b0620c0574e04dc12e00124c0c0430ac8216b01660212c037210411800c021014c02189108228e3429523c00f7002100894750069bffeb1006e1158040102bfee0e88854102902202bfd629891c0782366883bfc7c6403000250c4804bfb6c821d02422440860bfa38429c45029540510bf8fc13000aa992904c1bf824144410078101080))) else (if i < 82 then (if i < 80 then 0xc3f81200441c90008072c3e75889414500293200c3d708c1249a00634020c3c055183218a042c1c7c3ad94011a1002a259a8c39ba6c9003004807016c38810c0228b0b940912c379c0242a0c28080111c3690020145c25330060c3522a09609870472e44c33dc29c9442c03a0d00c32d40824111044207c4c31e0242e42460004818c30e8a005080130d0590c2f851082209c1323ad1c2e41c41c46115288062c2d3cc410092a2840026c2c404a408b0d0500801c2b6080403a000ce1220c2a404c183402448043bc28ee10152c204511b29c27a820a2a8954a0c8c0c26754261800b20b0072c2544b448082aa0142a8c242418d0003824481c5c22f69b2807060005111c21b11d0b000610c152dc20a20c10a6800811c51c1ff3002804821104100c1ec0e000ab4bc016028c1d2845e309d18d01e07c1bf88288052e104025d else (if i < 81 then 0xc63a51c0a24006484980c6264420a2a10e2405b4c6190801140045468084c608da1120219a000068c5f54240899a84126182c5e22087401c89106152c5cf8840b48491030689c5b94a642350053a0645c5ab8014800460639001c5972202252e4149810bc588220158c90a040300c5790014480468395002c56434a08300960ab324c558048808b348200000c54698240a2077220480c5320831501132c51198c5253020440480406580c51309640202c240a513c5008172e61600028015c4ec202e508510e1d108c4d7629c018151a2122cc4c59134054822142c80c4b2f8912a40606002a0c49b12eb2460c18e1403c485509108e60599a340c476e1020a0424221880c460742855e520310052c44b8210849cc0964ca2c43c0e08a0a860020510c42c1c0251200c401289c41809c20008ec915930c406cb802c4608500218 else 0xc8611a4538080b8c3010c84f614220950d058101c84408c008140a080420c83129d8403160110425c81f9c3804a3c1000141c8111000d2021824ca00c7ff8483013a69009018c7ee0b91400958250021c7db01364089200b8a34c7cd4023010580880170c7bc6081419412142824c7a985cc8410106a2602c79704182245244d5840c7873fb1002880900800c77562434a0005201598c766901800444190a062c7586045032422400030c7450e57218008922a04c7360090314090624308c722958061c20a081259c71100100026a0d62817c6ff30422803c2018692c6ecb140850011ac0325c6d960e408a882823302c6c62a526809b1200806c6b088f08f8946040815c69e00100351580d1465c692ac01200400020131c6820ad2124204a12008c66f460428802831d815c65e30a84e000830111cc64b44103c00323468c4)) else (if i < 83 then 0xcaa60c80a0b3a3540881ca978150a010d0000e42ca835130024426814ca5ca748208412800cbc020ca6060013800c9291a53ca5103080098300d8850ca3c2ea08a8c90916410ca2c038620288260180aca1490452548306ec28eca0699801a0030201014c9f38440a0720d05c412c9de403312c381c02a1ac9cd0564c90104105046c9b6542b164496b10054c9a7840449034b400a00c995487d1320000260c8c98289a000127c821470c9728212115804920508c9610122420953018911c9510360401818188a82c942388406010e489000c92b654e3c3053072080c91754513c09200e8016c9024c83d830200ccb01c8eb9040c258a38a19b8c8da20a60620110cb0c0c8cb151cc40004204a02c8bb0427c14118500018c8a7e490800a7a202c09c89a5108010060228442c88a20193902140208d0c8743240b4744640982a else (if i < 84 then 0xccd20352266c820449a1ccbc3a5006c25191118acca822382a84d1801905cc960e69101406220708cc7fcdd3201e20842682cc6e80e8b0000404285dcc5c05a880c2504240d8cc4fa44060000c080918cc3c9800242345652218cc285302878840b4a030cc1a0448004804527202cc0e020298098000040bcbfb4b300b894034200ccbe504a02895584bc981cbd830090400c8018181cbc6c126462c11001222cbb484224a0209816a14cba300085ac89508d200cb9143015006388540e0cb8501808a5005002808cb701823b1e0404c94a0cb5c24e2b240a606001ccb4ac0000224ceb41301cb38a342430e01280105cb26028680f801013350cb1701406806c3204808cb0b062084020030a0c0cafc640310020482c340caee0122124028080435cae19050046608000038cacd204805901d043ba4caba22021e0809a8a162 else 0xcf0f102bd8201303351acef9ac02c00e23016665cee881610e9220080603ced788288204080906d9cec485c8300e02c23410ceb7100002c344300601cea2114065168c0da062ce922a0608b011085300ce846d0b402180010080ce7218a518d080702009ce6310223205240240e0ce570002852003052011ce4012362889db848290ce28076cc01a84879990ce181c41840111790010ce050817080be8201605cdf64314316100408804cde7a09461b200400081cdd5009801740d1068b0cdbfa3254008962994a2cdae104c028c053120c4cd985c605065128a8306cd842890449181715448cd730c00a481111c8492cd5dc10d821262e88b40cd4f051004022054a01ccd412a6000084d508020cd2c350ec200ecb20060cd1b5022482806036214cd08c042093249413484ccf28f003479104ca242cce75088001040028094)))) else (if i < 91 then (if i < 88 then (if i < 86 then 0xd14e0080293232808705d139123112148a0f5089d1288847022148c48041d11284486198a5942825d103460a426001085220d0f28115009c820102e2d0dd0914ac40d24c0712d0cc080c004108e855a8d0bb3002120a42449183d0a7a831502490a89b00d097a340044891844041d089108880409801e012d0752c10a83c61244841d065104ca490401a0007d05241a5309062248a04d03f0028a14466031d14d03000f20402806480c2d01e23026d5458110004d01054a8024088020442d0026440b00200101a0acfee03d0066195162108cfd98022c31404cb0ce4cfc90410054220594d02cfb509502208966190e2cfa1062400cd5109b0a4cf940023420428434010cf7d6c863c82108250e5cf6942c5306980048691cf55280e50270e088c30cf479d09010000508501cf3950403a00481c0810cf254034225d68046304 else (if i < 87 then 0xd390c404608660a60881d37d084382b104891036d36a42c40011f1231241d3581e009d0920480c84d349050138450001c0e0d337828121102d00619ad32512463a0280313108d318143e080040810280d30360465060a1aa0568d2f24c0a0c1002404cc9d2e11068022062446a82d2d11c2010a014a40168d2ba91295430455c208ed2aca310508801203800d291e310810ebc09cae5d281228601211441a204d26e808c4804c2054ea4d2591440a37b82024498d24a1c1208106041c101d237bdd3a20008103004d224a1210cc180c41c82d21202046303801f8230d2001068828c08286512d1ef8204113641502803d1de009c988315060810d1cb2c060862244a05a4d1bd22f8204002810410d1adc801580054180e20d19d860844430002c311d18a380086fc0482a048d1742451d00c43a6220ed15f80418833e07224c8 else 0xd5c99a11016040000897d5b844ad81010a80d100d5a31428814e8412cd0cd5946266008012192040d579931e4087a535ca82d56e0040091804412120d55c4152042068a600c9d54c8150893002048541d5410120021554820000d52930f0e02a608890b7d514317500a2430c1443d502c010278c68208052d4ec6a0909c01b639240d4df08024c8052100428d4d04060003024546904d4b9388931561a288ca0d4a58583c74a01140130d4954891040640c50218d4838416091108988862d4712688848185405460d45fa24609048a126044d44e0640b1086022c250d43a8c16711200a088c9d4280a212354c202a030d41201b404841b4910fad4008006080814bba206d3f0020410018918c534d3e0808539030001500bd3d0519020c0a062a040d3bdf101490116289300d3ab0ba1906e60040012d3a20002004040412c20)) else (if i < 89 then 0xd80048f5520306150a60d7f143040400a8a01903d7e80440114804000024d7d82244e830c2101200d7c4112429429700441bd7b4199092a2080f0000d7a1a890267429088801d78ec88348068098114ad77a20508c1b0182b807d76a0604413c24009112d7574183342571202201d748c6042842a0020414d7344912302438804d15d71f920b143c08906891d70c80c20e2090692708d6f3b3628ac2440f40a5d6e420281a0103311044d6cf4ac16c08a23020e2d6bf0998190211380084d6a8ac0309206880dea5d6938000f706c6494029d681891174460c80a008d66f2764a2080c111240d662082a100402024162d65202101c1290020c6cd643000d944011104d80d633002e4012102e0611d61d250b9456a9418082d60d0146564084800688d5fe004040c0158648b0d5ef02a0c43401022160d5d92754303881c02661 else (if i < 90 then 0xda3fec0e258089100600da3140a03181820a0201da21808900862809418cda1010aa9212044045a0da044002086288888200d9ea1474264cf1061aa5d9dc0048c00124730500d9cb2003850468910684d9b796188402050a6741d9a94420a32010870008d9938a536210a6170109d9820904020e49588228d972221060511022c112d9625806481121514002d94fa882d09111601640d93944250e21465c4ac0d9268d16a20048008d25d90e3449057a63c2011cd8fe8850068903c01180d8ef81080900c8286250d8e00068c60830002618d8c92d10b015b1c66820d8bb1000a020442aca10d8a8a0956100162c4128d8973209343086043100d881828108e94b248499d86f2040209120ac7306d86040401a1094b21008d84d614a902832847080d83d86040a03e1004212d8270810c9a24e4d90d0d8169329d40c00541000 else 0xdc810083002800c90089dc700004126711441238dc5e5120a11a4da00044dc4f00040a0c8628d110dc3d631001201030704fdc2a40500d60406e041bdc1808b3c10208078015dc040411550aa888e181dbf10282700c59880a51dbde8120c0d600824a55dbcb020a4829a8580558dbbe80010080b0734020dbae80009221d0602514db9b2821326114695400db862912140623823899db742a6010040514b4a2db6306728300842e0180db532c4206000188a306db3ba44c1d10108756aadb2bc01d804360000807db1ca428808308000724db0430a8826e07d180a3daf30180784a00152e08dae4c25008100800b292dad30aa1062008d07208dac1090100a548962047daaf040510714002c54bda9bb10a50b360a10101da883410a1640294c085da6e9b140e889060bc9bda60051401c84100a044da5140a108d822820500))) else (if i < 94 then (if i < 92 then 0xdec01042944012406210deaa6742408b483542a0de9611a8ac8a22208941de867403a91040800908de790020442c04132880de68001242a200953c12de55c228491ce8026010de3c1ea8967511281452de290249b18310117420de15c01004e3a148c0d1de01451510a03ac502c0ddef1a492220204845a4dddeca4400018300a163ddcb01088287241229d4ddbd40819e0100284140ddaa0208548e12c2404ddd961464004ab014ab50dd80212c512076cc0c90dd6e8168c03644120016dd6200d4004108108141dd4e0524858835898086dd3832a858398a312024dd2b8203a03090102002dd174988089892542305dd0524240241406a031ddcf502408120680e1c24dce1983006c5810030e3dcd59202040359000040dcc60a0c1608a2002510dcb10511b50828d2046adc9e0860b10907162308dc8dc098c2030a008864 else (if i < 93 then 0xe1021820296050090280e0f1141192444c0e1004e0e35a00044811302808e0ce27120016a41e2183e0bb146a01d4b0920220e0a78401552261c01e22e0970400831b21040c0de0850106ea0272800225e0758ca0022089904488e0631101104a92c8a222e04fa308038675206090e03e2a408ab088122204e02d409290200883484de01802802471332463c2e00859b0413000084841dff21ce06606c948ac00dfdfab051c2846019080dfd00020240c18851a03dfba64255950a281a04cdfa7c98038811322008edf9446810191106c0315df86001d8a10024003a0df778a4ac03088400108df6608821401c8e01219df54c2100805d8845884df3d2c208c34a1017556df260c9ce90262864682df1350542b8a50004c42df060402838208210428def684808310c9148108dee331224441d2401681dece505e60c0a40d4a01 else 0xe3312140a8004800c0d2e3220c05c21510808404e30c80138919914308eae2f386e1a38283504b45e2e019099292200cd840e2cf0a51403601821015e2bc00205a0b8025ac19e2aa2518c10a0580c062e2992427014800294528e2846158ad20c0307208e27708401428420c4011e26310320af268210151e25211a040548604140be24500230a4406090820e22e940c4058590782d5e2210804840019c0840ae21301c010a200701805e206035001008262c100e1f46424f10408c2c200e1e405506120200405aae1d369801005142c2230e1c02602a0c01d0a5160e1ac640508c40570f00ce19fa80404248280000de18f0a50104040646c42e179a8baa85522089021e166836140362240a019e1548a1046204c80aac0e142613c088268848104e12c3826548d90934120e11a8118002102d426c3e1108840001124000812)) else (if i < 96 then (if i < 95 then 0xe56d13b411584300488ee55d8181419002664060e54a00088660418b3525e5337174600419c99422e5239000c71300940250e5140c80424934003108e50601881082125100a8e4f20130185286626344e4e25009409104019924e4cf10a02142428f3405e4bd28b00c008c81a9c0e4ad4454c00981928100e49816a094e5a0205412e4872a04c13603033000e47404052ab03704084ae463cc08a0941c021480e4542340114880528014e44090203240c5311e48e43040002481b02c8311e421008c14a00c20520ae40b0e866c000167264ae3f9513894ab40480004e3e86912802410080f28e3d58001161aa05b4034e3c5a874042300010053e3b0306c200cd1217121e39b422051f01489360ae385ec8669800b404461e37800889340224800c0e367c121083120a28114e35322c947264250400ae33ff06042c219148501 else 0xe7a58900186091a4282be793820a451308861850e7875001062482201010e7760004018360e33e00e7660038b8001422051ce7520d32526062210b08e7422481012c8288e010e72f01106004d565818ae71a87060942818b6260e706704f082101394112e6f1a090d8048a92506ae6e0100012d0023c09c5e6cf2402204458091a94e6bd89081012064548b1e6aa806634ca401d0012e69e0120810180342220e68950ae412d14d80600e6772293593010002a06e6668844224172202484e656688841110001449ce64814a000080144d910e633e3972208063804c0e61e84104d8921271823e60b06ac0c04895a1024e5fd2c40100820e05022e5e817c8a5c80418001be5d64028604064a24a64e5c1ae1a1000a818898ee5b3c20010a604300821e5a70250421090108104e595208909301d2a0304e58204068490c0a52a0b) else (if i < 97 then 0xe9cea41440206b041423e9be1411a60280228148e9af010433944009080ce9a18462801240540820e98f30024e0501988930e981110461900084c180e977100010410240c410e95fe901283b8bc420a2e951102d10c063000011e94028300b314a009120e92ea72a80108089210ae91b10d04cadc00c1300e9096214210a04880ab2e8fa50c3000121730400e8e7c0c3008cf2046408e8d71e000808700a0817e8c2843549072084885ce8b400800400221c552ce8a40065048b405900c0e89411242c4280120185e8824c4090290d003344e8722001d08893240828e861009d0c20604e40c0e84ac03ce9161c484411e8349948076225070891e8214270224691150241e813501008402c0288a2e80122410d6824390042e7f10b10490130444884e7df848034124640a60ae7cb50b01851220c581ce7b83660014c000c908f else 0xe9e000004240111a4410)))))))
+
+
+private def pop (x : ℕ) :=
+  let a := x - ((x >>> 1) &&& 0x5555555555555555)
+  let b := (a &&& 0x3333333333333333) + ((a >>> 2) &&& 0x3333333333333333)
+  let c := (b + (b >>> 4)) &&& 0x0f0f0f0f0f0f0f0f
+  ((c * 0x0101010101010101) >>> 56) % 256
+
+private def raw (j : ℕ) : ℕ :=
+  let entry := ((packet (j/2048)) >>> (80*((j%2048)/64))) % (2^80)
+  (entry >>> 64) + pop (entry % (2^(j%64)))
+
+private def small (n : ℕ) : ℕ := if 5≤n then 3 else if 3≤n then 2 else if 2≤n then 1 else 0
+
+def fast (n : ℕ) : ℕ := raw (index n) + small n
+
+
+private def radical : ℕ := 64727760444696869327356262173332069296794997878059775294531545224069262035627514157021036248727312907391583027586384787638010120014791853884159885279757108688900117388240170662109471830215312607019519181001085017860303682461265538530471552259609648478688137893546325349699378594307518434401199342207086253794155107313022934822862053013778470993217559803389936430
+
+private def light (n : ℕ) : Bool :=
+  if n≤29 then decide n.Prime else n.gcd 8841761993739701954543616000000 == 1
+
+private theorem light_ok {n : ℕ} (hn : n≤863) : light n=true ↔ n.Prime := by
+  unfold light
+  split_ifs with small
+  · simp
+  · have fac : Nat.factorial 29 = 8841761993739701954543616000000 := by decide +kernel
+    rw [←fac,beq_iff_eq]
+    constructor
+    · intro cop
+      by_contra no
+      have prime := Nat.minFac_prime (n:=n) (by omega)
+      have sq := Nat.minFac_sq_le_self (n:=n) (by omega) no
+      have cut : n.minFac ≤ 29 := by
+        by_contra! high
+        have ge := Nat.mul_le_mul high high
+        rw [pow_two] at sq
+        omega
+      have d := Nat.dvd_gcd (Nat.minFac_dvd n) (Nat.dvd_factorial (Nat.minFac_pos n) cut)
+      rw [cop] at d
+      exact prime.not_dvd_one d
+    · intro prime
+      exact prime.coprime_factorial_of_lt (by omega)
+
+private def quick (n : ℕ) : Bool := if n≤863 then light n else n.gcd radical == 1
+
+private def smallCheck (p : ℕ) := decide (p≤1) || !(p.gcd radical == 1)
+private def smallValid (lo count : ℕ) : Prop := (List.range' lo count).all smallCheck = true
+private theorem joinSmall {lo a b : ℕ} (h : smallValid lo a) (k : smallValid (lo+a) b) :
+    smallValid lo (a+b) := by
+  unfold smallValid at *
+  rw [← List.range'_append_1,List.all_append,h,k]
+  rfl
+
+
+private theorem sp0 : smallValid 0 54 := by unfold smallValid; decide +kernel
+
+private theorem sp54 : smallValid 54 54 := by unfold smallValid; decide +kernel
+
+private theorem sp108 : smallValid 108 54 := by unfold smallValid; decide +kernel
+
+private theorem sp162 : smallValid 162 54 := by unfold smallValid; decide +kernel
+
+private theorem sp216 : smallValid 216 54 := by unfold smallValid; decide +kernel
+
+private theorem sp270 : smallValid 270 54 := by unfold smallValid; decide +kernel
+
+private theorem sp324 : smallValid 324 54 := by unfold smallValid; decide +kernel
+
+private theorem sp378 : smallValid 378 54 := by unfold smallValid; decide +kernel
+
+private theorem sp432 : smallValid 432 54 := by unfold smallValid; decide +kernel
+
+private theorem sp486 : smallValid 486 54 := by unfold smallValid; decide +kernel
+
+private theorem sp540 : smallValid 540 54 := by unfold smallValid; decide +kernel
+
+private theorem sp594 : smallValid 594 54 := by unfold smallValid; decide +kernel
+
+private theorem sp648 : smallValid 648 54 := by unfold smallValid; decide +kernel
+
+private theorem sp702 : smallValid 702 54 := by unfold smallValid; decide +kernel
+
+private theorem sp756 : smallValid 756 54 := by unfold smallValid; decide +kernel
+
+private theorem sp810 : smallValid 810 54 := by unfold smallValid; decide +kernel
+
+private theorem smallPrimeDvd (p : ℕ) (bound : p≤863) (hp : p.Prime) : p ∣ radical := by
+  have all : smallValid 0 864 := (joinSmall (lo:=0) (a:=432) (b:=432) (joinSmall (lo:=0) (a:=216) (b:=216) (joinSmall (lo:=0) (a:=108) (b:=108) (joinSmall (lo:=0) (a:=54) (b:=54) sp0 sp54) (joinSmall (lo:=108) (a:=54) (b:=54) sp108 sp162)) (joinSmall (lo:=216) (a:=108) (b:=108) (joinSmall (lo:=216) (a:=54) (b:=54) sp216 sp270) (joinSmall (lo:=324) (a:=54) (b:=54) sp324 sp378))) (joinSmall (lo:=432) (a:=216) (b:=216) (joinSmall (lo:=432) (a:=108) (b:=108) (joinSmall (lo:=432) (a:=54) (b:=54) sp432 sp486) (joinSmall (lo:=540) (a:=54) (b:=54) sp540 sp594)) (joinSmall (lo:=648) (a:=108) (b:=108) (joinSmall (lo:=648) (a:=54) (b:=54) sp648 sp702) (joinSmall (lo:=756) (a:=54) (b:=54) sp756 sp810))))
+  have good : (List.range 864).all smallCheck=true := by rw [List.range_eq_range'];exact all
+  have h := List.all_eq_true.mp good p (List.mem_range.mpr (by omega))
+  have hn : ¬ p≤1 := by have := hp.two_le; omega
+  have ne : p.gcd radical ≠ 1 := by simpa [smallCheck,hn] using h
+  have eq : p.gcd radical = p := ((Nat.dvd_prime hp).mp (Nat.gcd_dvd_left p radical)).resolve_left ne
+  simpa only [eq] using Nat.gcd_dvd_right p radical
+set_option maxRecDepth 16000 in
+private theorem quick_ok {n : ℕ} (hn : n ≤ 745089) : quick n=true ↔ n.Prime := by
+  unfold quick
+  split_ifs with hs
+  · exact light_ok hs
+  · have hm : radical ∣ Nat.factorial 863 := by decide +kernel
+    rw [beq_iff_eq]
+    constructor
+    · intro eq
+      by_contra hnp
+      have hpr := Nat.minFac_prime (n:=n) (by omega)
+      have hsq := Nat.minFac_sq_le_self (n:=n) (by omega) hnp
+      have hfac : n.minFac ≤ 863 := by
+        by_contra! hi
+        have hb := Nat.mul_le_mul hi hi
+        rw [pow_two] at hsq
+        omega
+      have hd := Nat.dvd_gcd (Nat.minFac_dvd n) (smallPrimeDvd n.minFac hfac hpr)
+      rw [eq] at hd
+      exact hpr.not_dvd_one hd
+    · intro hp
+      exact Nat.Coprime.of_dvd_right hm (hp.coprime_factorial_of_lt (by omega))
+
+
+
+
+
+
+private def step (j : ℕ) : Bool := raw (j+1) == raw j + (if quick (number j) then 1 else 0)
+
+private def valid (lo len : ℕ) : Prop := (List.range' lo len).all step = true
+private theorem glue {lo a b : ℕ} (left : valid lo a) (right : valid (lo+a) b) : valid lo (a+b) := by
+  unfold valid at *
+  rw [←List.range'_append_1,List.all_append,left,right]
+  rfl
+
+
+private theorem halve (lo n : ℕ) (h : valid lo (n/2))
+    (k : valid (lo+n/2) (n-n/2)) : valid lo n := by
+  simpa only [show n/2+(n-n/2)=n by omega] using glue h k
+
+private def covered (lo hi : ℕ) : Prop :=
+  ∀ j, lo≤j → j<hi → step j=true
+
+private theorem checked {lo hi : ℕ} (h : valid lo (hi-lo)) : covered lo hi := by
+  intro j lower upper
+  exact List.all_eq_true.mp h j (List.mem_range'_1.mpr ⟨lower,by omega⟩)
+
+private theorem joinCoverage {lo mid hi : ℕ} (l : covered lo mid) (r : covered mid hi) :
+    covered lo hi := by
+  intro j lower upper
+  by_cases isLeft : j < mid
+  · exact l j lower isLeft
+  · exact r j (by omega) upper
+
+
+
+private theorem d0 : covered 0 776 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d776 : covered 776 1552 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d1552 : covered 1552 2328 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d2328 : covered 2328 3104 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d3104 : covered 3104 3880 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d3880 : covered 3880 4656 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d4656 : covered 4656 5432 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d5432 : covered 5432 6209 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d6209 : covered 6209 6985 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d6985 : covered 6985 7761 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d7761 : covered 7761 8537 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d8537 : covered 8537 9314 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d9314 : covered 9314 10090 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d10090 : covered 10090 10866 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d10866 : covered 10866 11642 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d11642 : covered 11642 12419 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d12419 : covered 12419 13195 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d13195 : covered 13195 13971 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d13971 : covered 13971 14747 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d14747 : covered 14747 15523 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d15523 : covered 15523 16299 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d16299 : covered 16299 17075 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d17075 : covered 17075 17851 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d17851 : covered 17851 18628 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d18628 : covered 18628 19404 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d19404 : covered 19404 20180 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d20180 : covered 20180 20956 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d20956 : covered 20956 21733 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d21733 : covered 21733 22509 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d22509 : covered 22509 23285 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d23285 : covered 23285 24061 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d24061 : covered 24061 24838 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d24838 : covered 24838 25614 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d25614 : covered 25614 26390 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d26390 : covered 26390 27166 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d27166 : covered 27166 27942 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d27942 : covered 27942 28718 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d28718 : covered 28718 29494 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d29494 : covered 29494 30270 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d30270 : covered 30270 31047 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d31047 : covered 31047 31823 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d31823 : covered 31823 32599 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d32599 : covered 32599 33375 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d33375 : covered 33375 34152 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d34152 : covered 34152 34928 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d34928 : covered 34928 35704 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d35704 : covered 35704 36480 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d36480 : covered 36480 37257 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d37257 : covered 37257 38033 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d38033 : covered 38033 38809 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d38809 : covered 38809 39585 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d39585 : covered 39585 40361 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d40361 : covered 40361 41137 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d41137 : covered 41137 41913 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d41913 : covered 41913 42689 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d42689 : covered 42689 43466 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d43466 : covered 43466 44242 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d44242 : covered 44242 45018 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d45018 : covered 45018 45794 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d45794 : covered 45794 46571 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d46571 : covered 46571 47347 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d47347 : covered 47347 48123 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d48123 : covered 48123 48899 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d48899 : covered 48899 49676 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d49676 : covered 49676 50452 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d50452 : covered 50452 51228 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d51228 : covered 51228 52004 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d52004 : covered 52004 52780 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d52780 : covered 52780 53556 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d53556 : covered 53556 54332 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d54332 : covered 54332 55108 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d55108 : covered 55108 55885 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d55885 : covered 55885 56661 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d56661 : covered 56661 57437 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d57437 : covered 57437 58213 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d58213 : covered 58213 58990 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d58990 : covered 58990 59766 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d59766 : covered 59766 60542 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d60542 : covered 60542 61318 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d61318 : covered 61318 62095 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d62095 : covered 62095 62871 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d62871 : covered 62871 63647 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d63647 : covered 63647 64423 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d64423 : covered 64423 65199 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d65199 : covered 65199 65975 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d65975 : covered 65975 66751 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d66751 : covered 66751 67527 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d67527 : covered 67527 68304 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d68304 : covered 68304 69080 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d69080 : covered 69080 69856 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d69856 : covered 69856 70632 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d70632 : covered 70632 71409 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d71409 : covered 71409 72185 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d72185 : covered 72185 72961 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d72961 : covered 72961 73737 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d73737 : covered 73737 74514 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d74514 : covered 74514 75290 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d75290 : covered 75290 76066 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d76066 : covered 76066 76842 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d76842 : covered 76842 77618 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d77618 : covered 77618 78394 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d78394 : covered 78394 79170 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d79170 : covered 79170 79946 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d79946 : covered 79946 80723 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d80723 : covered 80723 81499 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d81499 : covered 81499 82275 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d82275 : covered 82275 83051 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d83051 : covered 83051 83828 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d83828 : covered 83828 84604 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d84604 : covered 84604 85380 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d85380 : covered 85380 86156 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d86156 : covered 86156 86933 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d86933 : covered 86933 87709 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d87709 : covered 87709 88485 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d88485 : covered 88485 89261 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d89261 : covered 89261 90037 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d90037 : covered 90037 90813 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d90813 : covered 90813 91589 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d91589 : covered 91589 92365 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d92365 : covered 92365 93142 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d93142 : covered 93142 93918 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d93918 : covered 93918 94694 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d94694 : covered 94694 95470 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d95470 : covered 95470 96247 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d96247 : covered 96247 97023 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d97023 : covered 97023 97799 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d97799 : covered 97799 98575 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d98575 : covered 98575 99352 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d99352 : covered 99352 100128 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d100128 : covered 100128 100904 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d100904 : covered 100904 101680 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d101680 : covered 101680 102456 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d102456 : covered 102456 103232 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d103232 : covered 103232 104008 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d104008 : covered 104008 104784 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d104784 : covered 104784 105561 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d105561 : covered 105561 106337 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d106337 : covered 106337 107113 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d107113 : covered 107113 107889 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d107889 : covered 107889 108666 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d108666 : covered 108666 109442 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d109442 : covered 109442 110218 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d110218 : covered 110218 110994 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d110994 : covered 110994 111771 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d111771 : covered 111771 112547 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d112547 : covered 112547 113323 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d113323 : covered 113323 114099 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d114099 : covered 114099 114875 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d114875 : covered 114875 115651 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d115651 : covered 115651 116427 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d116427 : covered 116427 117203 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d117203 : covered 117203 117980 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d117980 : covered 117980 118756 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d118756 : covered 118756 119532 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d119532 : covered 119532 120308 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d120308 : covered 120308 121085 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d121085 : covered 121085 121861 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d121861 : covered 121861 122637 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d122637 : covered 122637 123413 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d123413 : covered 123413 124190 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d124190 : covered 124190 124966 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d124966 : covered 124966 125742 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d125742 : covered 125742 126518 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d126518 : covered 126518 127294 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d127294 : covered 127294 128070 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d128070 : covered 128070 128846 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d128846 : covered 128846 129622 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d129622 : covered 129622 130399 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d130399 : covered 130399 131175 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d131175 : covered 131175 131951 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d131951 : covered 131951 132727 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d132727 : covered 132727 133504 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d133504 : covered 133504 134280 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d134280 : covered 134280 135056 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d135056 : covered 135056 135832 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d135832 : covered 135832 136609 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d136609 : covered 136609 137385 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d137385 : covered 137385 138161 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d138161 : covered 138161 138937 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d138937 : covered 138937 139713 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d139713 : covered 139713 140489 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d140489 : covered 140489 141265 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d141265 : covered 141265 142041 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d142041 : covered 142041 142818 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d142818 : covered 142818 143594 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d143594 : covered 143594 144370 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d144370 : covered 144370 145146 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d145146 : covered 145146 145923 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d145923 : covered 145923 146699 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d146699 : covered 146699 147475 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d147475 : covered 147475 148251 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d148251 : covered 148251 149028 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d149028 : covered 149028 149804 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d149804 : covered 149804 150580 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d150580 : covered 150580 151356 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d151356 : covered 151356 152132 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d152132 : covered 152132 152908 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d152908 : covered 152908 153684 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d153684 : covered 153684 154460 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d154460 : covered 154460 155237 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d155237 : covered 155237 156013 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d156013 : covered 156013 156789 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d156789 : covered 156789 157565 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d157565 : covered 157565 158342 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d158342 : covered 158342 159118 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d159118 : covered 159118 159894 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d159894 : covered 159894 160670 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d160670 : covered 160670 161447 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d161447 : covered 161447 162223 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d162223 : covered 162223 162999 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d162999 : covered 162999 163775 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d163775 : covered 163775 164551 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d164551 : covered 164551 165327 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d165327 : covered 165327 166103 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d166103 : covered 166103 166879 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d166879 : covered 166879 167656 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d167656 : covered 167656 168432 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d168432 : covered 168432 169208 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d169208 : covered 169208 169984 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d169984 : covered 169984 170761 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d170761 : covered 170761 171537 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d171537 : covered 171537 172313 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d172313 : covered 172313 173089 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d173089 : covered 173089 173866 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d173866 : covered 173866 174642 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d174642 : covered 174642 175418 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d175418 : covered 175418 176194 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d176194 : covered 176194 176970 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d176970 : covered 176970 177746 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d177746 : covered 177746 178522 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d178522 : covered 178522 179298 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d179298 : covered 179298 180075 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d180075 : covered 180075 180851 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d180851 : covered 180851 181627 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d181627 : covered 181627 182403 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d182403 : covered 182403 183180 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d183180 : covered 183180 183956 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d183956 : covered 183956 184732 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d184732 : covered 184732 185508 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d185508 : covered 185508 186285 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d186285 : covered 186285 187061 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d187061 : covered 187061 187837 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d187837 : covered 187837 188613 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d188613 : covered 188613 189389 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d189389 : covered 189389 190165 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d190165 : covered 190165 190941 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d190941 : covered 190941 191717 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d191717 : covered 191717 192494 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d192494 : covered 192494 193270 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d193270 : covered 193270 194046 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d194046 : covered 194046 194822 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d194822 : covered 194822 195599 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d195599 : covered 195599 196375 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d196375 : covered 196375 197151 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d197151 : covered 197151 197927 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+private theorem d197927 : covered 197927 198704 := checked (by apply halve <;> apply halve <;> apply halve <;> apply halve <;> unfold valid <;> decide +kernel)
+
+set_option maxRecDepth 16000 in
+private theorem allrows : covered 0 198704 := (joinCoverage (joinCoverage (joinCoverage (joinCoverage (joinCoverage (joinCoverage (joinCoverage (joinCoverage d0 d776) (joinCoverage d1552 d2328)) (joinCoverage (joinCoverage d3104 d3880) (joinCoverage d4656 d5432))) (joinCoverage (joinCoverage (joinCoverage d6209 d6985) (joinCoverage d7761 d8537)) (joinCoverage (joinCoverage d9314 d10090) (joinCoverage d10866 d11642)))) (joinCoverage (joinCoverage (joinCoverage (joinCoverage d12419 d13195) (joinCoverage d13971 d14747)) (joinCoverage (joinCoverage d15523 d16299) (joinCoverage d17075 d17851))) (joinCoverage (joinCoverage (joinCoverage d18628 d19404) (joinCoverage d20180 d20956)) (joinCoverage (joinCoverage d21733 d22509) (joinCoverage d23285 d24061))))) (joinCoverage (joinCoverage (joinCoverage (joinCoverage (joinCoverage d24838 d25614) (joinCoverage d26390 d27166)) (joinCoverage (joinCoverage d27942 d28718) (joinCoverage d29494 d30270))) (joinCoverage (joinCoverage (joinCoverage d31047 d31823) (joinCoverage d32599 d33375)) (joinCoverage (joinCoverage d34152 d34928) (joinCoverage d35704 d36480)))) (joinCoverage (joinCoverage (joinCoverage (joinCoverage d37257 d38033) (joinCoverage d38809 d39585)) (joinCoverage (joinCoverage d40361 d41137) (joinCoverage d41913 d42689))) (joinCoverage (joinCoverage (joinCoverage d43466 d44242) (joinCoverage d45018 d45794)) (joinCoverage (joinCoverage d46571 d47347) (joinCoverage d48123 d48899)))))) (joinCoverage (joinCoverage (joinCoverage (joinCoverage (joinCoverage (joinCoverage d49676 d50452) (joinCoverage d51228 d52004)) (joinCoverage (joinCoverage d52780 d53556) (joinCoverage d54332 d55108))) (joinCoverage (joinCoverage (joinCoverage d55885 d56661) (joinCoverage d57437 d58213)) (joinCoverage (joinCoverage d58990 d59766) (joinCoverage d60542 d61318)))) (joinCoverage (joinCoverage (joinCoverage (joinCoverage d62095 d62871) (joinCoverage d63647 d64423)) (joinCoverage (joinCoverage d65199 d65975) (joinCoverage d66751 d67527))) (joinCoverage (joinCoverage (joinCoverage d68304 d69080) (joinCoverage d69856 d70632)) (joinCoverage (joinCoverage d71409 d72185) (joinCoverage d72961 d73737))))) (joinCoverage (joinCoverage (joinCoverage (joinCoverage (joinCoverage d74514 d75290) (joinCoverage d76066 d76842)) (joinCoverage (joinCoverage d77618 d78394) (joinCoverage d79170 d79946))) (joinCoverage (joinCoverage (joinCoverage d80723 d81499) (joinCoverage d82275 d83051)) (joinCoverage (joinCoverage d83828 d84604) (joinCoverage d85380 d86156)))) (joinCoverage (joinCoverage (joinCoverage (joinCoverage d86933 d87709) (joinCoverage d88485 d89261)) (joinCoverage (joinCoverage d90037 d90813) (joinCoverage d91589 d92365))) (joinCoverage (joinCoverage (joinCoverage d93142 d93918) (joinCoverage d94694 d95470)) (joinCoverage (joinCoverage d96247 d97023) (joinCoverage d97799 d98575))))))) (joinCoverage (joinCoverage (joinCoverage (joinCoverage (joinCoverage (joinCoverage (joinCoverage d99352 d100128) (joinCoverage d100904 d101680)) (joinCoverage (joinCoverage d102456 d103232) (joinCoverage d104008 d104784))) (joinCoverage (joinCoverage (joinCoverage d105561 d106337) (joinCoverage d107113 d107889)) (joinCoverage (joinCoverage d108666 d109442) (joinCoverage d110218 d110994)))) (joinCoverage (joinCoverage (joinCoverage (joinCoverage d111771 d112547) (joinCoverage d113323 d114099)) (joinCoverage (joinCoverage d114875 d115651) (joinCoverage d116427 d117203))) (joinCoverage (joinCoverage (joinCoverage d117980 d118756) (joinCoverage d119532 d120308)) (joinCoverage (joinCoverage d121085 d121861) (joinCoverage d122637 d123413))))) (joinCoverage (joinCoverage (joinCoverage (joinCoverage (joinCoverage d124190 d124966) (joinCoverage d125742 d126518)) (joinCoverage (joinCoverage d127294 d128070) (joinCoverage d128846 d129622))) (joinCoverage (joinCoverage (joinCoverage d130399 d131175) (joinCoverage d131951 d132727)) (joinCoverage (joinCoverage d133504 d134280) (joinCoverage d135056 d135832)))) (joinCoverage (joinCoverage (joinCoverage (joinCoverage d136609 d137385) (joinCoverage d138161 d138937)) (joinCoverage (joinCoverage d139713 d140489) (joinCoverage d141265 d142041))) (joinCoverage (joinCoverage (joinCoverage d142818 d143594) (joinCoverage d144370 d145146)) (joinCoverage (joinCoverage d145923 d146699) (joinCoverage d147475 d148251)))))) (joinCoverage (joinCoverage (joinCoverage (joinCoverage (joinCoverage (joinCoverage d149028 d149804) (joinCoverage d150580 d151356)) (joinCoverage (joinCoverage d152132 d152908) (joinCoverage d153684 d154460))) (joinCoverage (joinCoverage (joinCoverage d155237 d156013) (joinCoverage d156789 d157565)) (joinCoverage (joinCoverage d158342 d159118) (joinCoverage d159894 d160670)))) (joinCoverage (joinCoverage (joinCoverage (joinCoverage d161447 d162223) (joinCoverage d162999 d163775)) (joinCoverage (joinCoverage d164551 d165327) (joinCoverage d166103 d166879))) (joinCoverage (joinCoverage (joinCoverage d167656 d168432) (joinCoverage d169208 d169984)) (joinCoverage (joinCoverage d170761 d171537) (joinCoverage d172313 d173089))))) (joinCoverage (joinCoverage (joinCoverage (joinCoverage (joinCoverage d173866 d174642) (joinCoverage d175418 d176194)) (joinCoverage (joinCoverage d176970 d177746) (joinCoverage d178522 d179298))) (joinCoverage (joinCoverage (joinCoverage d180075 d180851) (joinCoverage d181627 d182403)) (joinCoverage (joinCoverage d183180 d183956) (joinCoverage d184732 d185508)))) (joinCoverage (joinCoverage (joinCoverage (joinCoverage d186285 d187061) (joinCoverage d187837 d188613)) (joinCoverage (joinCoverage d189389 d190165) (joinCoverage d190941 d191717))) (joinCoverage (joinCoverage (joinCoverage d192494 d193270) (joinCoverage d194046 d194822)) (joinCoverage (joinCoverage d195599 d196375) (joinCoverage d197151 d197927))))))))
+
+theorem fast_correct (n : ℕ) (bound : n ≤ 745089) : fast n = Nat.primeCounting n := by
+  induction n with
+  | zero => rfl
+  | succ n ih =>
+    by_cases smallN : n < 6
+    · have tests : ∀ i : Fin 7, fast i.val = Nat.primeCounting i.val := by decide +kernel
+      exact tests ⟨n+1,by omega⟩
+    · have unchanged : small (n+1) = small n := by simp [small,show 5≤n by omega,show 5≤n+1 by omega]
+      rw [show Nat.primeCounting (n+1) = Nat.primeCounting n + (if (n+1).Prime then 1 else 0)
+          from Nat.count_succ Nat.Prime (n+1),←ih (by omega)]
+      rcases wheel_step n with ⟨e,hd⟩ | ⟨e,whose⟩
+      · have hp := skips_composite (by omega : 5<n+1) hd
+        simp only [fast,e,unchanged,if_neg hp,Nat.add_zero]
+      · have ix := index_bound (show n≤745089 by omega)
+        have h := beq_iff_eq.mp (allrows (index n) (Nat.zero_le _) ix)
+        change raw (index n+1) = raw (index n) + (if quick (number (index n)) then 1 else 0) at h
+        rw [whose] at h
+        simp only [fast,e,h,unchanged]
+        by_cases hp : (n+1).Prime
+        · simp [hp,(quick_ok bound).mpr hp,Nat.add_right_comm]
+        · simp [hp,mt (quick_ok bound).mp hp]
+def prime (n : ℕ) : Bool := quick n
+theorem prime_ok (n : ℕ) (hn : n≤745089) : prime n=true ↔ n.Prime := quick_ok hn
+end FastDenseA26
+
+open Finset
+namespace IndexedSlicedW17SieveA25From128To192
+
+lemma legendre {ps : List ℕ} (hsort : ps.Pairwise (· > ·)) (hprime : ∀ p ∈ ps, Nat.Prime p)
+    (hcomp : ∀ p ∈ ps, ∀ q, Nat.Prime q → q < p → q ∈ ps) (x : ℕ) :
+    ps.foldr (fun (p : ℕ) (f : ℕ → ℕ) (t : ℕ) => if t < p then (if t = 0 then 0 else 1) else f t - f (t / p)) id x =
+      ((Icc 1 x).filter (fun n => ∀ p ∈ ps, ¬ p ∣ n)).card := by
+  let sieveSet (ps : List ℕ) (x : ℕ) := (Icc 1 x).filter (fun n => ∀ p ∈ ps, ¬ p ∣ n)
+  have mem_sieveSet {ps : List ℕ} {x n : ℕ} :
+      n ∈ sieveSet ps x ↔ (1 ≤ n ∧ n ≤ x) ∧ ∀ p ∈ ps, ¬ p ∣ n := by
+    simp [sieveSet]
+  
+  have sieveSet_nil (x : ℕ) : sieveSet [] x = Finset.Icc 1 x := by
+    ext n; simp [sieveSet]
+  
+  /- Legendre's recursion step. -/
+  have card_sieveSet_cons {p : ℕ} {ps : List ℕ} (hp : p.Prime) (hps : ∀ q ∈ ps, q.Prime ∧ q ≠ p)
+      (x : ℕ) :
+      (sieveSet (p :: ps) x).card = (sieveSet ps x).card - (sieveSet ps (x / p)).card := by
+    have hsplit : sieveSet (p :: ps) x = (sieveSet ps x).filter (fun n => ¬ p ∣ n) := by
+      ext n; simp [sieveSet, List.mem_cons]; tauto
+    have himage : (sieveSet ps x).filter (fun n => p ∣ n) = (sieveSet ps (x / p)).image (p * ·) := by
+      ext n
+      simp only [Finset.mem_filter, mem_sieveSet, Finset.mem_image]
+      constructor
+      · rintro ⟨⟨⟨h1, hx⟩, hq⟩, ⟨m, rfl⟩⟩
+        refine ⟨m, ⟨⟨?_, ?_⟩, ?_⟩, rfl⟩
+        · rcases Nat.eq_zero_or_pos m with rfl | hm
+          · simp at h1
+          · exact hm
+        · exact (Nat.le_div_iff_mul_le hp.pos).2 (by rw [mul_comm]; exact hx)
+        · intro q hq' hdvd
+          exact hq q hq' (dvd_mul_of_dvd_right hdvd p)
+      · rintro ⟨m, ⟨⟨h1, hm⟩, hq⟩, rfl⟩
+        refine ⟨⟨⟨?_, ?_⟩, ?_⟩, dvd_mul_right p m⟩
+        · exact Nat.one_le_iff_ne_zero.2 (mul_ne_zero hp.ne_zero (by omega))
+        · rw [mul_comm]; exact (Nat.le_div_iff_mul_le hp.pos).1 hm
+        · intro q hq' hdvd
+          obtain ⟨hqp, hqne⟩ := hps q hq'
+          rcases (Nat.Prime.dvd_mul hqp).1 hdvd with h | h
+          · exact hqne ((Nat.prime_dvd_prime_iff_eq hqp hp).1 h)
+          · exact hq q hq' h
+    have hcard := Finset.card_filter_add_card_filter_not (s := sieveSet ps x) (fun n => p ∣ n)
+    rw [himage, Finset.card_image_of_injective _ (mul_right_injective₀ hp.ne_zero)] at hcard
+    rw [hsplit]
+    omega
+  
+  /- Pruning: below `p`, only `1` survives the sieve by all primes less than `p`. -/
+  have card_sieveSet_of_lt {p : ℕ} {ps : List ℕ} (hps : ∀ q ∈ ps, q.Prime)
+      (hcomplete : ∀ q, q.Prime → q < p → q ∈ ps) {x : ℕ} (hx : x < p) :
+      (sieveSet (p :: ps) x).card = if x = 0 then 0 else 1 := by
+    split_ifs with h0
+    · subst h0; simp [sieveSet]
+    · have : sieveSet (p :: ps) x = {1} := by
+        ext n
+        simp only [mem_sieveSet, Finset.mem_singleton, List.mem_cons, forall_eq_or_imp]
+        constructor
+        · rintro ⟨⟨h1, hnx⟩, -, hq⟩
+          by_contra hne
+          have hn1 : n ≠ 1 := hne
+          have hmf := Nat.minFac_prime hn1
+          have hlt : Nat.minFac n < p := lt_of_le_of_lt (Nat.minFac_le (by omega)) (by omega)
+          exact hq _ (hcomplete _ hmf hlt) (Nat.minFac_dvd n)
+        · rintro rfl
+          refine ⟨⟨le_rfl, by omega⟩, ?_, ?_⟩
+          · intro h
+            have := Nat.le_of_dvd one_pos h
+            omega
+          · intro q hq; exact Nat.Prime.not_dvd_one (hps q hq)
+      rw [this, Finset.card_singleton]
+  
+  change _ = (sieveSet ps x).card
+  induction ps generalizing x with
+  | nil => simp [sieveSet_nil]
+  | cons p ps ih =>
+    obtain ⟨hgt,hs⟩ := List.pairwise_cons.mp hsort
+    have hp := hprime p List.mem_cons_self
+    have hq (q) (hq : q ∈ ps) := hprime q (List.mem_cons_of_mem p hq)
+    have hc (q) (h : q.Prime) (lt : q < p) : q ∈ ps := by
+      rcases List.mem_cons.mp (hcomp p List.mem_cons_self q h lt) with eq | hm
+      · omega
+      · exact hm
+    have closed (r) (hr : r ∈ ps) (q) (h : q.Prime) (lt : q < r) := hc q h (lt.trans (hgt r hr))
+    simp only [List.foldr_cons]
+    split_ifs with lt zero
+    · rw [card_sieveSet_of_lt hq hc lt, if_pos zero]
+    · rw [card_sieveSet_of_lt hq hc lt, if_neg zero]
+    · rw [card_sieveSet_cons hp (fun q h => ⟨hq q h, (hgt q h).ne⟩), ih hs hq closed, ih hs hq closed]
+
+lemma legendre_range (y x : ℕ) :
+    (((List.range (y+1)).filter (fun p => decide p.Prime)).reverse.foldr
+      (fun (p : ℕ) (f : ℕ → ℕ) (t : ℕ) => if t < p then (if t = 0 then 0 else 1) else f t - f (t / p)) id x) =
+    ((Icc 1 x).filter (fun n => ∀ p ∈ Nat.primesLE y, ¬ p ∣ n)).card := by
+  let ps := ((List.range (y+1)).filter (fun p => decide p.Prime)).reverse
+  have mem (p : ℕ) : p ∈ ps ↔ p ∈ Nat.primesLE y := by simp [ps, Nat.mem_primesLE]
+  have hsort : ps.Pairwise (· > ·) := by
+    apply List.pairwise_reverse.mpr
+    exact List.pairwise_lt_range.filter _
+  have e := legendre hsort (fun p hp => Nat.prime_of_mem_primesLE ((mem p).mp hp))
+    (fun p hp q hq hlt => (mem q).mpr (Nat.mem_primesLE.mpr ⟨hlt.le.trans (Nat.le_of_mem_primesLE ((mem p).mp hp)), hq⟩)) x
+  convert e using 1
+  congr 1
+  ext n
+  simp only [mem_filter, mem_Icc, mem]
+
+/-- At a cube-root cutoff, every surviving composite has exactly two prime factors,
+with multiplicity. Sorting the factors makes this parametrization injective. -/
+lemma meissel {x y z : ℕ} (hx : 1 ≤ x) (hy : y ≤ x) (cube : x < (y+1)^3)
+    (sq : x < (z+1)^2) :
+    ((Icc 1 x).filter (fun n => ∀ p ∈ Nat.primesLE y, ¬ p ∣ n)).card +
+      (Nat.primesLE y).card = 1 + (Nat.primesLE x).card +
+      ∑ p ∈ (Nat.primesLE z).filter (y < ·), ((Nat.primesLE (x/p)).filter (p ≤ ·)).card := by
+  classical
+  let R := (Icc 1 x).filter (fun n => ∀ p ∈ Nat.primesLE y, ¬ p ∣ n)
+  let T := R.filter (fun n => n ≠ 1 ∧ ¬n.Prime)
+  let B := (Nat.primesLE z).filter (y < ·)
+  let Q (p : ℕ) := (Nat.primesLE (x/p)).filter (p ≤ ·)
+  have memR (n) : n ∈ R ↔ (1 ≤ n ∧ n ≤ x) ∧ ∀ p ∈ Nat.primesLE y, ¬ p ∣ n := by simp [R]
+  have memT (n) : n ∈ T ↔ n ∈ R ∧ n ≠ 1 ∧ ¬n.Prime := by simp [T]
+  have memB (p) : p ∈ B ↔ (p ≤ z ∧ p.Prime) ∧ y < p := by simp [B, Nat.mem_primesLE]
+  have memQ (p q) : q ∈ Q p ↔ (q ≤ x/p ∧ q.Prime) ∧ p ≤ q := by simp [Q, Nat.mem_primesLE]
+  have least {p q : ℕ} (hp : p.Prime) (hq : q.Prime) (pq : p ≤ q) : (p*q).minFac = p := by
+    have hn : p*q ≠ 1 := by have := hp.two_le; have := hq.two_le; nlinarith
+    have hm := Nat.minFac_prime hn
+    apply le_antisymm (Nat.minFac_le_of_dvd hp.two_le (dvd_mul_right p q))
+    rcases hm.dvd_mul.mp (Nat.minFac_dvd (p*q)) with a | b
+    · exact ((Nat.prime_dvd_prime_iff_eq hm hp).mp a).symm.le
+    · exact pq.trans_eq ((Nat.prime_dvd_prime_iff_eq hm hq).mp b).symm
+  have pair : (B.sigma Q).card = T.card := by
+    apply card_bij (fun a _ => a.1 * a.2)
+    · intro ⟨p,q⟩ h
+      obtain ⟨hb,hq⟩ := mem_sigma.mp h
+      obtain ⟨⟨_,pp⟩,yp⟩ := (memB p).mp hb
+      obtain ⟨⟨ub,qp⟩,ord⟩ := (memQ p q).mp hq
+      have pos := Nat.mul_pos pp.pos qp.pos
+      have bound : p*q ≤ x := by simpa [mul_comm] using (Nat.le_div_iff_mul_le pp.pos).mp ub
+      apply (memT _).mpr
+      refine ⟨(memR _).mpr ⟨⟨pos,bound⟩, ?_⟩, ?_, ?_⟩
+      · intro r hr hd
+        obtain ⟨ry,rp⟩ := Nat.mem_primesLE.mp hr
+        rcases rp.dvd_mul.mp hd with a | b
+        · have := (Nat.prime_dvd_prime_iff_eq rp pp).mp a; omega
+        · have := (Nat.prime_dvd_prime_iff_eq rp qp).mp b; omega
+      · have := pp.two_le; have := qp.two_le; dsimp; nlinarith
+      · intro prime
+        have := (Nat.prime_dvd_prime_iff_eq pp prime).mp (dvd_mul_right p q)
+        have := pp.two_le; have := qp.two_le; dsimp at *; nlinarith
+    · intro ⟨p,q⟩ ha ⟨r,s⟩ hb eq
+      obtain ⟨ha,hq⟩ := mem_sigma.mp ha
+      obtain ⟨hb,hs⟩ := mem_sigma.mp hb
+      obtain ⟨⟨_,pp⟩,_⟩ := (memB p).mp ha
+      obtain ⟨⟨_,rp⟩,_⟩ := (memB r).mp hb
+      obtain ⟨⟨_,qp⟩,a⟩ := (memQ p q).mp hq
+      obtain ⟨⟨_,sp⟩,b⟩ := (memQ r s).mp hs
+      change p*q=r*s at eq
+      have same := (least pp qp a).symm.trans ((congrArg Nat.minFac eq).trans (least rp sp b))
+      subst r
+      obtain rfl := Nat.eq_of_mul_eq_mul_left pp.pos eq
+      rfl
+    · intro n hn
+      obtain ⟨hr,ne,np⟩ := (memT n).mp hn
+      obtain ⟨⟨pos,bound⟩,rough⟩ := (memR n).mp hr
+      let p := n.minFac
+      let q := n / p
+      have pp : p.Prime := Nat.minFac_prime ne
+      have product : p*q = n := Nat.mul_div_cancel' (Nat.minFac_dvd n)
+      have ord : p ≤ q := Nat.minFac_le_div pos np
+      have yp : y < p := by
+        by_contra! h
+        exact rough _ (Nat.mem_primesLE.mpr ⟨h,pp⟩) (Nat.minFac_dvd n)
+      have qp : q.Prime := by
+        by_contra hq
+        have qpos : 0 < q := pp.pos.trans_le ord
+        have qq := Nat.minFac_sq_le_self qpos hq
+        have qne : q ≠ 1 := by have := pp.two_le; omega
+        have rprime := Nat.minFac_prime qne
+        have yr : y < q.minFac := by
+          by_contra! h
+          apply rough _ (Nat.mem_primesLE.mpr ⟨h,rprime⟩)
+          rw [← product]
+          exact dvd_mul_of_dvd_right (Nat.minFac_dvd q) _
+        have b := Nat.mul_le_mul (show y+1 ≤ p by omega)
+          (le_trans (Nat.pow_le_pow_left (show y+1 ≤ q.minFac by omega) 2) qq)
+        nlinarith only [product,b,bound,cube]
+      have pz : p ≤ z := by
+        by_contra! h
+        have a := Nat.mul_le_mul (show z+1≤p by omega) (show z+1≤q by omega)
+        nlinarith only [product,a,sq,bound]
+      refine ⟨⟨p,q⟩, mem_sigma.mpr ⟨(memB _).mpr ⟨⟨pz,pp⟩,yp⟩,
+        (memQ _ _).mpr ⟨⟨(Nat.le_div_iff_mul_le pp.pos).mpr ?_,qp⟩,ord⟩⟩, product⟩
+      simpa [mul_comm,product] using (product.le.trans bound)
+  have primepart : R.filter Nat.Prime = (Nat.primesLE x).filter (fun n => ¬ n ≤ y) := by
+    ext n
+    simp only [mem_filter,memR,Nat.mem_primesLE]
+    constructor
+    · rintro ⟨⟨⟨_,ub⟩,r⟩,np⟩
+      exact ⟨⟨ub,np⟩,fun h => r n ⟨h,np⟩ (dvd_refl n)⟩
+    · rintro ⟨⟨ub,np⟩,gt⟩
+      refine ⟨⟨⟨np.one_le,ub⟩,fun p hp hd => ?_⟩, np⟩
+      exact gt (((Nat.prime_dvd_prime_iff_eq hp.2 np).mp hd) ▸ hp.1)
+  have low : (Nat.primesLE x).filter (· ≤ y) = Nat.primesLE y := by
+    ext n
+    simp only [mem_filter,Nat.mem_primesLE]
+    exact ⟨fun h => ⟨h.2,h.1.2⟩, fun h => ⟨⟨h.1.trans hy,h.2⟩,h.1⟩⟩
+  have other : R.filter (fun n => ¬n.Prime) = insert 1 T := by
+    ext n
+    simp only [mem_filter,mem_insert,memT]
+    constructor
+    · rintro ⟨hr,hp⟩; by_cases h : n=1
+      · exact Or.inl h
+      · exact Or.inr ⟨hr,h,hp⟩
+    · rintro (rfl | ⟨hr,_,hp⟩)
+      · exact ⟨(memR _).mpr ⟨⟨le_rfl,hx⟩,fun p hp => (Nat.prime_of_mem_primesLE hp).not_dvd_one⟩,Nat.not_prime_one⟩
+      · exact ⟨hr,hp⟩
+  have one : 1 ∉ T := fun h => ((memT 1).mp h).2.1 rfl
+  have v := card_filter_add_card_filter_not (s:=R) Nat.Prime
+  have w := card_filter_add_card_filter_not (s:=Nat.primesLE x) (· ≤ y)
+  rw [primepart,other,card_insert_of_notMem one] at v
+  rw [low] at w
+  rw [card_sigma] at pair
+  change R.card + _ = 1 + _ + ∑ p ∈ B, (Q p).card
+  omega
+
+/-- Interval subtraction evaluates each row of the semiprime count using only ordinary prime counts. -/
+lemma prime_row {p t : ℕ} (pos : 0 < p) (le : p ≤ t) :
+    ((Nat.primesLE t).filter (p ≤ ·)).card = Nat.primeCounting t - Nat.primeCounting (p-1) := by
+  have eq : (Nat.primesLE t).filter (fun n => ¬p ≤ n) = Nat.primesLE (p-1) := by
+    ext n
+    simp only [mem_filter,Nat.mem_primesLE]
+    constructor
+    · rintro ⟨⟨_,pr⟩,lt⟩; exact ⟨by omega,pr⟩
+    · rintro ⟨ub,pr⟩; exact ⟨⟨by omega,pr⟩,by omega⟩
+  have h := card_filter_add_card_filter_not (s:=Nat.primesLE t) (p ≤ ·)
+  rw [eq, Nat.primesLE_card_eq_primeCounting, Nat.primesLE_card_eq_primeCounting] at h
+  omega
+
+lemma rank_of_parts {x y z a b r : ℕ} (hx : 1 ≤ x) (hy : y ≤ x) (cube : x < (y+1)^3)
+    (sq : x < (z+1)^2) (zs : z*z ≤ x)
+    (sieved : (((List.range (y+1)).filter (fun p => decide p.Prime)).reverse.foldr
+      (fun (p : ℕ) (f : ℕ → ℕ) (t : ℕ) => if t < p then (if t = 0 then 0 else 1) else f t - f (t / p)) id x) +
+      (Nat.primesLE y).card = a)
+    (pairs : (∑ p ∈ (Nat.primesLE z).filter (y < ·), (Nat.primeCounting (x/p) - Nat.primeCounting (p-1))) = b)
+    (result : 1+r+b = a) : Nat.primeCounting x = r := by
+  have e := meissel hx hy cube sq
+  have row (p : ℕ) (hp : p ∈ (Nat.primesLE z).filter (y < ·)) := by
+    have bound := Nat.le_of_mem_primesLE (mem_filter.mp hp).1
+    have pos := (Nat.prime_of_mem_primesLE (mem_filter.mp hp).1).pos
+    exact prime_row pos ((Nat.le_div_iff_mul_le pos).mpr ((Nat.mul_le_mul bound bound).trans zs))
+  rw [legendre_range] at sieved
+  rw [sum_congr rfl row, pairs, Nat.primesLE_card_eq_primeCounting x] at e
+  omega
+
+def advance (p : ℕ) (f : ℕ → ℕ) (x : ℕ) :=
+  if x < p then (if x=0 then 0 else 1) else f x - f (x/p)
+
+private def evalPhi (table : ℕ → ℕ) : List ℕ → ℕ → ℕ
+  | [], t => t
+  | p :: ps, t => if p=17 then ShortPeriod510510.wheel t else if t < p then (if t=0 then 0 else 1) else
+      if t < (p+1)^2 ∧ t ≤ 452524 then 1 + table t - table p else
+        evalPhi table ps t - evalPhi table ps (t/p)
+
+private theorem square_cut {p t : ℕ} (hp : 0 < p) (pt : p ≤ t) (square : t < (p+1)^2) :
+    (((List.range (p+1)).filter (fun n => decide n.Prime)).reverse.foldr advance id) t +
+      Nat.primeCounting p = 1 + Nat.primeCounting t := by
+  have cube : t < (p+1)^3 :=
+    lt_of_lt_of_le square (Nat.pow_le_pow_right (by omega) (by decide : 2 ≤ 3))
+  have empty : (Nat.primesLE p).filter (p < ·) = ∅ := by
+    apply Finset.eq_empty_iff_forall_notMem.mpr
+    intro n hn
+    exact (not_lt_of_ge (Nat.le_of_mem_primesLE (Finset.mem_filter.mp hn).1))
+      (Finset.mem_filter.mp hn).2
+  have h := meissel (x:=t) (y:=p) (z:=p) (by omega) pt cube square
+  simp only [empty,Finset.sum_empty,Nat.add_zero,Nat.primesLE_card_eq_primeCounting] at h
+  rw [←legendre_range] at h
+  exact h
+
+private theorem refine_row {bound p : ℕ} (tab : ℕ → ℕ) (ok : ∀ t, t ≤ bound → tab t = Nat.primeCounting t)
+    (ps : List ℕ) (lst : ((List.range (p+1)).filter (fun n => decide n.Prime)).reverse = p::ps)
+    (prev : ∀ t, ps.foldr advance id t = evalPhi tab ps t)
+    (pos : 0 < p) (cap : 452524 ≤ bound) : ∀ t,
+    (p::ps).foldr advance id t = evalPhi tab (p::ps) t := by
+  intro t
+  by_cases hbase : p=17
+  · subst p
+    have val : (17::ps).foldr advance id t = ShortPeriod510510.wheel t := by
+      rw [←lst]
+      exact (legendre_range 17 t).trans (ShortPeriod510510.count_rough t)
+    simpa [evalPhi] using val
+  by_cases sm : t < p
+  · simp [List.foldr_cons,advance,evalPhi,hbase,sm]
+  · by_cases short : t < (p+1)^2 ∧ t ≤ 452524
+    · have h := square_cut pos (by omega : p ≤ t) short.1
+      rw [lst] at h
+      rw [evalPhi,if_neg hbase,if_neg sm,if_pos short,ok t (by omega),ok p (by omega)]
+      omega
+    · simp only [List.foldr_cons,advance,evalPhi,if_neg hbase,if_neg sm,if_neg short,prev]
+
+private theorem merge_filter (f : ℕ → Bool) (lo a b : ℕ) (l r : List ℕ)
+    (hl : (List.range' lo a).filter f = l) (hr : (List.range' (lo+a) b).filter f = r) :
+    (List.range' lo (a+b)).filter f = l++r := by
+  rw [←List.range'_append_1,List.filter_append,hl,hr]
+
+private theorem eval_delta (tab : ℕ → ℕ) (ps : List ℕ) (p n q old dec ans : ℕ)
+    (notWheel : p≠17) (le : p ≤ n) (sq : (p+1)^2 ≤ n) (div : n/p = q)
+    (base : evalPhi tab ps n = old) (cut : evalPhi tab ps q = dec) (sub : old-dec=ans) :
+    evalPhi tab (p::ps) n = ans := by
+  rw [evalPhi,if_neg notWheel,if_neg (not_lt.mpr le),if_neg (fun h => (not_lt.mpr sq) h.1),div,base,cut,sub]
+
+private theorem agree_range {bound : ℕ} (table : ℕ → ℕ)
+    (ok : ∀ t, t ≤ bound → table t = Nat.primeCounting t)
+    (y : ℕ) (cap : 452524 ≤ bound) :
+    ∀ t, (((List.range (y+1)).filter (fun p => decide p.Prime)).reverse.foldr advance id) t =
+      evalPhi table ((List.range (y+1)).filter (fun p => decide p.Prime)).reverse t := by
+  induction y with
+  | zero => simp [List.range_succ,evalPhi]
+  | succ n ih =>
+    by_cases hp : (n+1).Prime
+    · have row : ((List.range (n+1+1)).filter (fun p => decide p.Prime)).reverse =
+          (n+1) :: ((List.range (n+1)).filter (fun p => decide p.Prime)).reverse := by
+        rw [List.range_succ (n:=n+1),List.filter_append,List.reverse_append]
+        simp [hp]
+      rw [row]
+      exact refine_row table ok _ row ih (by omega) cap
+    · have row : ((List.range (n+1+1)).filter (fun p => decide p.Prime)).reverse =
+          ((List.range (n+1)).filter (fun p => decide p.Prime)).reverse := by
+        rw [List.range_succ (n:=n+1),List.filter_append,List.reverse_append]
+        simp [hp]
+      rw [row]
+      exact ih
+
+
+
+private abbrev tab := FastDenseA26.fast
+private abbrev F := evalPhi tab
+private abbrev prime := FastDenseA26.prime
+private theorem prime_ok (n : ℕ) (h : n≤745089) : prime n=true ↔ n.Prime := FastDenseA26.prime_ok n h
+
+private def rankedPhi (table : ℕ → ℕ) : ℕ → List ℕ → ℕ → ℕ
+  | _, [], t => t
+  | a, p::ps, t =>
+    if p=17 then ShortPeriod510510.wheel t
+    else if t < p then (if t=0 then 0 else 1)
+    else if t < (p+1)^2 ∧ t ≤ 452524 then 1+table t-a
+    else rankedPhi table (a-1) ps t - rankedPhi table (a-1) ps (t/p)
+
+private theorem ranked_range {b : ℕ} (table : ℕ → ℕ)
+    (ok : ∀ n, n≤b → table n=Nat.primeCounting n) (y : ℕ) (yb : y≤b) :
+    ∀ t, evalPhi table ((List.range (y+1)).filter (fun p => decide p.Prime)).reverse t =
+      rankedPhi table (Nat.primeCounting y) ((List.range (y+1)).filter (fun p => decide p.Prime)).reverse t := by
+  induction y with
+  | zero => simp [List.range_succ,evalPhi,rankedPhi]
+  | succ n ih =>
+    have prev := ih (by omega)
+    have succCount : Nat.primeCounting (n+1) = Nat.primeCounting n + (if (n+1).Prime then 1 else 0) :=
+      Nat.count_succ Nat.Prime (n+1)
+    by_cases hp : (n+1).Prime
+    · have row : ((List.range (n+1+1)).filter (fun p => decide p.Prime)).reverse =
+          (n+1) :: ((List.range (n+1)).filter (fun p => decide p.Prime)).reverse := by
+        rw [List.range_succ (n:=n+1),List.filter_append,List.reverse_append]
+        simp [hp]
+      have grade : Nat.primeCounting (n+1)=Nat.primeCounting n+1 := by rw [succCount,if_pos hp]
+      have value : table (n+1)=Nat.primeCounting n+1 := (ok _ yb).trans grade
+      intro t
+      rw [row,grade]
+      simp only [evalPhi,rankedPhi,Nat.add_sub_cancel,prev,value]
+    · have row : ((List.range (n+1+1)).filter (fun p => decide p.Prime)).reverse =
+          ((List.range (n+1)).filter (fun p => decide p.Prime)).reverse := by
+        rw [List.range_succ (n:=n+1),List.filter_append,List.reverse_append]
+        simp [hp]
+      rw [row,succCount,if_neg hp,Nat.add_zero]
+      exact prev
+
+private abbrev R := rankedPhi tab
+private def resumeRank (base : List ℕ) (start : ℕ) : ℕ → List ℕ → ℕ → ℕ
+  | _, [], _ => start
+  | a, p::ps, t =>
+    if p=17 then ShortPeriod510510.wheel t
+    else if t < p then (if t=0 then 0 else 1)
+    else if t < (p+1)^2 ∧ t ≤ 452524 then 1+tab t-a
+    else resumeRank base start (a-1) ps t - R (a-1) (ps++base) (t/p)
+
+private theorem resume_correct (portion base : List ℕ) (baseRank t start : ℕ) (old : R baseRank base t=start) :
+    R (baseRank+portion.length) (portion++base) t = resumeRank base start (baseRank+portion.length) portion t := by
+  induction portion with
+  | nil => simpa [resumeRank] using old
+  | cons p ps ih =>
+    simp only [List.cons_append,List.length_cons,Nat.add_succ,rankedPhi,resumeRank,Nat.succ_sub_one,ih]
+
+private theorem continue_at {portion base whole : List ℕ} {t start answer baseRank rank : ℕ}
+    (same : portion++base=whole) (grade : baseRank+portion.length=rank)
+    (old : R baseRank base t=start) (checked : resumeRank base start rank portion t=answer) :
+    R rank whole t=answer := by
+  subst whole
+  subst rank
+  exact (resume_correct portion base baseRank t start old).trans checked
+
+private def sa0 : List ℕ := []
+private def sc32 : List ℕ := [131,127,113,109,107,103,101,97,89,83,79,73,71,67,61,59,53,47,43,41,37,31,29,23,19,17,13,11,7,5,3,2]
+private def sa32 : List ℕ := sc32++sa0
+private def sc64 : List ℕ := [311,307,293,283,281,277,271,269,263,257,251,241,239,233,229,227,223,211,199,197,193,191,181,179,173,167,163,157,151,149,139,137]
+private def sa64 : List ℕ := sc64++sa32
+private def sc96 : List ℕ := [503,499,491,487,479,467,463,461,457,449,443,439,433,431,421,419,409,401,397,389,383,379,373,367,359,353,349,347,337,331,317,313]
+private def sa96 : List ℕ := sc96++sa64
+private def sc128 : List ℕ := [719,709,701,691,683,677,673,661,659,653,647,643,641,631,619,617,613,607,601,599,593,587,577,571,569,563,557,547,541,523,521,509]
+private def sa128 : List ℕ := sc128++sa96
+private def sc129 : List ℕ := [727]
+private def sc130 : List ℕ := [733,727]
+private def sc131 : List ℕ := [739,733,727]
+private def sc132 : List ℕ := [743,739,733,727]
+private def sc133 : List ℕ := [751,743,739,733,727]
+private def sc134 : List ℕ := [757,751,743,739,733,727]
+private def sc135 : List ℕ := [761,757,751,743,739,733,727]
+private def sc136 : List ℕ := [769,761,757,751,743,739,733,727]
+private def sc137 : List ℕ := [773,769,761,757,751,743,739,733,727]
+private def sc138 : List ℕ := [787,773,769,761,757,751,743,739,733,727]
+private def sc139 : List ℕ := [797,787,773,769,761,757,751,743,739,733,727]
+private def sc140 : List ℕ := [809,797,787,773,769,761,757,751,743,739,733,727]
+private def sc141 : List ℕ := [811,809,797,787,773,769,761,757,751,743,739,733,727]
+private def sc142 : List ℕ := [821,811,809,797,787,773,769,761,757,751,743,739,733,727]
+private def sc143 : List ℕ := [823,821,811,809,797,787,773,769,761,757,751,743,739,733,727]
+private def sc144 : List ℕ := [827,823,821,811,809,797,787,773,769,761,757,751,743,739,733,727]
+private def sc145 : List ℕ := [829,827,823,821,811,809,797,787,773,769,761,757,751,743,739,733,727]
+private def sc146 : List ℕ := [839,829,827,823,821,811,809,797,787,773,769,761,757,751,743,739,733,727]
+private def sc147 : List ℕ := [853,839,829,827,823,821,811,809,797,787,773,769,761,757,751,743,739,733,727]
+private def sc148 : List ℕ := [857,853,839,829,827,823,821,811,809,797,787,773,769,761,757,751,743,739,733,727]
+private def sc149 : List ℕ := [859,857,853,839,829,827,823,821,811,809,797,787,773,769,761,757,751,743,739,733,727]
+private def sc150 : List ℕ := [863,859,857,853,839,829,827,823,821,811,809,797,787,773,769,761,757,751,743,739,733,727]
+private def sc151 : List ℕ := [877,863,859,857,853,839,829,827,823,821,811,809,797,787,773,769,761,757,751,743,739,733,727]
+private def sc152 : List ℕ := [881,877,863,859,857,853,839,829,827,823,821,811,809,797,787,773,769,761,757,751,743,739,733,727]
+private def sc153 : List ℕ := [883,881,877,863,859,857,853,839,829,827,823,821,811,809,797,787,773,769,761,757,751,743,739,733,727]
+private def sc154 : List ℕ := [887,883,881,877,863,859,857,853,839,829,827,823,821,811,809,797,787,773,769,761,757,751,743,739,733,727]
+private def sc155 : List ℕ := [907,887,883,881,877,863,859,857,853,839,829,827,823,821,811,809,797,787,773,769,761,757,751,743,739,733,727]
+private def sc156 : List ℕ := [911,907,887,883,881,877,863,859,857,853,839,829,827,823,821,811,809,797,787,773,769,761,757,751,743,739,733,727]
+private def sc157 : List ℕ := [919,911,907,887,883,881,877,863,859,857,853,839,829,827,823,821,811,809,797,787,773,769,761,757,751,743,739,733,727]
+private def sc158 : List ℕ := [929,919,911,907,887,883,881,877,863,859,857,853,839,829,827,823,821,811,809,797,787,773,769,761,757,751,743,739,733,727]
+private def sc159 : List ℕ := [937,929,919,911,907,887,883,881,877,863,859,857,853,839,829,827,823,821,811,809,797,787,773,769,761,757,751,743,739,733,727]
+private def sc160 : List ℕ := [941,937,929,919,911,907,887,883,881,877,863,859,857,853,839,829,827,823,821,811,809,797,787,773,769,761,757,751,743,739,733,727]
+private def sa160 : List ℕ := sc160++sa128
+private def sc161 : List ℕ := [947]
+private def sc162 : List ℕ := [953,947]
+private def sc163 : List ℕ := [967,953,947]
+private def sc164 : List ℕ := [971,967,953,947]
+private def sc165 : List ℕ := [977,971,967,953,947]
+private def sc166 : List ℕ := [983,977,971,967,953,947]
+private def sc167 : List ℕ := [991,983,977,971,967,953,947]
+private def sc168 : List ℕ := [997,991,983,977,971,967,953,947]
+private def sc169 : List ℕ := [1009,997,991,983,977,971,967,953,947]
+private def sc170 : List ℕ := [1013,1009,997,991,983,977,971,967,953,947]
+private def sc171 : List ℕ := [1019,1013,1009,997,991,983,977,971,967,953,947]
+private def sc172 : List ℕ := [1021,1019,1013,1009,997,991,983,977,971,967,953,947]
+private def sc173 : List ℕ := [1031,1021,1019,1013,1009,997,991,983,977,971,967,953,947]
+private def sc174 : List ℕ := [1033,1031,1021,1019,1013,1009,997,991,983,977,971,967,953,947]
+private def sc175 : List ℕ := [1039,1033,1031,1021,1019,1013,1009,997,991,983,977,971,967,953,947]
+private def sc176 : List ℕ := [1049,1039,1033,1031,1021,1019,1013,1009,997,991,983,977,971,967,953,947]
+private def sc177 : List ℕ := [1051,1049,1039,1033,1031,1021,1019,1013,1009,997,991,983,977,971,967,953,947]
+private def sc178 : List ℕ := [1061,1051,1049,1039,1033,1031,1021,1019,1013,1009,997,991,983,977,971,967,953,947]
+private def sc179 : List ℕ := [1063,1061,1051,1049,1039,1033,1031,1021,1019,1013,1009,997,991,983,977,971,967,953,947]
+private def sc180 : List ℕ := [1069,1063,1061,1051,1049,1039,1033,1031,1021,1019,1013,1009,997,991,983,977,971,967,953,947]
+private def sc181 : List ℕ := [1087,1069,1063,1061,1051,1049,1039,1033,1031,1021,1019,1013,1009,997,991,983,977,971,967,953,947]
+private def sc182 : List ℕ := [1091,1087,1069,1063,1061,1051,1049,1039,1033,1031,1021,1019,1013,1009,997,991,983,977,971,967,953,947]
+private def sc183 : List ℕ := [1093,1091,1087,1069,1063,1061,1051,1049,1039,1033,1031,1021,1019,1013,1009,997,991,983,977,971,967,953,947]
+private def sc184 : List ℕ := [1097,1093,1091,1087,1069,1063,1061,1051,1049,1039,1033,1031,1021,1019,1013,1009,997,991,983,977,971,967,953,947]
+private def sc185 : List ℕ := [1103,1097,1093,1091,1087,1069,1063,1061,1051,1049,1039,1033,1031,1021,1019,1013,1009,997,991,983,977,971,967,953,947]
+private def sc186 : List ℕ := [1109,1103,1097,1093,1091,1087,1069,1063,1061,1051,1049,1039,1033,1031,1021,1019,1013,1009,997,991,983,977,971,967,953,947]
+private def sc187 : List ℕ := [1117,1109,1103,1097,1093,1091,1087,1069,1063,1061,1051,1049,1039,1033,1031,1021,1019,1013,1009,997,991,983,977,971,967,953,947]
+private def sc188 : List ℕ := [1123,1117,1109,1103,1097,1093,1091,1087,1069,1063,1061,1051,1049,1039,1033,1031,1021,1019,1013,1009,997,991,983,977,971,967,953,947]
+private def sc189 : List ℕ := [1129,1123,1117,1109,1103,1097,1093,1091,1087,1069,1063,1061,1051,1049,1039,1033,1031,1021,1019,1013,1009,997,991,983,977,971,967,953,947]
+private def sc190 : List ℕ := [1151,1129,1123,1117,1109,1103,1097,1093,1091,1087,1069,1063,1061,1051,1049,1039,1033,1031,1021,1019,1013,1009,997,991,983,977,971,967,953,947]
+private def sc191 : List ℕ := [1153,1151,1129,1123,1117,1109,1103,1097,1093,1091,1087,1069,1063,1061,1051,1049,1039,1033,1031,1021,1019,1013,1009,997,991,983,977,971,967,953,947]
+
+private theorem transfer {ps : List ℕ} {a p q origin removed step total : ℕ}
+    (ne : p≠17) (old : R a ps 204778727327=origin-removed) (part : R a ps q=step)
+    (div : 204778727327/p=q) (le : p≤204778727327) (sq : (p+1)^2≤204778727327) (sum : removed+step=total) :
+    R (a+1) (p::ps) 204778727327=origin-total := by
+  have notShort : ¬ (204778727327 < (p+1)^2 ∧ 204778727327 ≤ 452524) := fun h => (not_lt.mpr sq) h.1
+  simp only [R] at old part ⊢
+  simp only [rankedPhi,if_neg ne,if_neg (not_lt.mpr le),if_neg notShort,
+    Nat.add_sub_cancel,div,old,part,Nat.sub_sub,sum]
+
+private def ps128 : List ℕ := [719,709,701,691,683,677,673,661,659,653,647,643,641,631,619,617,613,607,601,599,593,587,577,571,569,563,557,547,541,523,521,509,503,499,491,487,479,467,463,461,457,449,443,439,433,431,421,419,409,401,397,389,383,379,373,367,359,353,349,347,337,331,317,313,311,307,293,283,281,277,271,269,263,257,251,241,239,233,229,227,223,211,199,197,193,191,181,179,173,167,163,157,151,149,139,137,131,127,113,109,107,103,101,97,89,83,79,73,71,67,61,59,53,47,43,41,37,31,29,23,19,17,13,11,7,5,3,2]
+private def origin : ℕ := R 128 ps128 204778727327
+private theorem v128 : R 128 ps128 204778727327=origin-0 := by rw [Nat.sub_zero]; rfl
+
+private def ps129 : List ℕ := 727::ps128
+
+private theorem h129_32 : R 32 sa32 281676378=31820417 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=281676378) (start:=281676378) rfl rfl rfl (by decide +kernel)
+private theorem h129_64 : R 64 sa64 281676378=27297934 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=281676378) (start:=31820417) rfl rfl h129_32 (by decide +kernel)
+private theorem h129_96 : R 96 sa96 281676378=25307409 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=281676378) (start:=27297934) rfl rfl h129_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c129 : R 128 ps128 281676378=24066548 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=281676378) (start:=25307409) rfl rfl h129_96 (by decide +kernel)
+private theorem v129 : R 129 ps129 204778727327=origin-24066548 :=
+  transfer (a:=128) (p:=727) (origin:=origin) (removed:=0) (by decide) v128 c129 rfl (by decide) (by decide) rfl
+
+private def ps130 : List ℕ := 733::ps129
+
+private theorem h130_32 : R 32 sa32 279370705=31559893 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=279370705) (start:=279370705) rfl rfl rfl (by decide +kernel)
+private theorem h130_64 : R 64 sa64 279370705=27074790 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=279370705) (start:=31559893) rfl rfl h130_32 (by decide +kernel)
+private theorem h130_96 : R 96 sa96 279370705=25100765 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=279370705) (start:=27074790) rfl rfl h130_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h130_128 : R 128 sa128 279370705=23869508 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=279370705) (start:=25100765) rfl rfl h130_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c130 : R 129 ps129 279370705=23837008 :=
+  continue_at (portion:=sc129) (base:=sa128) (rank:=129) (baseRank:=128) (t:=279370705) (start:=23869508) rfl rfl h130_128 (by decide +kernel)
+private theorem v130 : R 130 ps130 204778727327=origin-47903556 :=
+  transfer (a:=129) (p:=733) (origin:=origin) (removed:=24066548) (by decide) v129 c130 rfl (by decide) (by decide) rfl
+
+private def ps131 : List ℕ := 739::ps130
+
+private theorem h131_32 : R 32 sa32 277102472=31303565 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=277102472) (start:=277102472) rfl rfl rfl (by decide +kernel)
+private theorem h131_64 : R 64 sa64 277102472=26855341 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=277102472) (start:=31303565) rfl rfl h131_32 (by decide +kernel)
+private theorem h131_96 : R 96 sa96 277102472=24897597 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=277102472) (start:=26855341) rfl rfl h131_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h131_128 : R 128 sa128 277102472=23675862 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=277102472) (start:=24897597) rfl rfl h131_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c131 : R 130 ps130 277102472=23611592 :=
+  continue_at (portion:=sc130) (base:=sa128) (rank:=130) (baseRank:=128) (t:=277102472) (start:=23675862) rfl rfl h131_128 (by decide +kernel)
+private theorem v131 : R 131 ps131 204778727327=origin-71515148 :=
+  transfer (a:=130) (p:=739) (origin:=origin) (removed:=47903556) (by decide) v130 c131 rfl (by decide) (by decide) rfl
+
+private def ps132 : List ℕ := 743::ps131
+
+private theorem h132_32 : R 32 sa32 275610669=31135032 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=275610669) (start:=275610669) rfl rfl rfl (by decide +kernel)
+private theorem h132_64 : R 64 sa64 275610669=26711008 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=275610669) (start:=31135032) rfl rfl h132_32 (by decide +kernel)
+private theorem h132_96 : R 96 sa96 275610669=24763888 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=275610669) (start:=26711008) rfl rfl h132_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h132_128 : R 128 sa128 275610669=23548400 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=275610669) (start:=24763888) rfl rfl h132_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c132 : R 131 ps131 275610669=23452820 :=
+  continue_at (portion:=sc131) (base:=sa128) (rank:=131) (baseRank:=128) (t:=275610669) (start:=23548400) rfl rfl h132_128 (by decide +kernel)
+private theorem v132 : R 132 ps132 204778727327=origin-94967968 :=
+  transfer (a:=131) (p:=743) (origin:=origin) (removed:=71515148) (by decide) v131 c132 rfl (by decide) (by decide) rfl
+
+private def ps133 : List ℕ := 751::ps132
+
+private theorem h133_32 : R 32 sa32 272674736=30803279 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=272674736) (start:=272674736) rfl rfl rfl (by decide +kernel)
+private theorem h133_64 : R 64 sa64 272674736=26426843 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=272674736) (start:=30803279) rfl rfl h133_32 (by decide +kernel)
+private theorem h133_96 : R 96 sa96 272674736=24500757 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=272674736) (start:=26426843) rfl rfl h133_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h133_128 : R 128 sa128 272674736=23297511 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=272674736) (start:=24500757) rfl rfl h133_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c133 : R 132 ps132 272674736=23171692 :=
+  continue_at (portion:=sc132) (base:=sa128) (rank:=132) (baseRank:=128) (t:=272674736) (start:=23297511) rfl rfl h133_128 (by decide +kernel)
+private theorem v133 : R 133 ps133 204778727327=origin-118139660 :=
+  transfer (a:=132) (p:=751) (origin:=origin) (removed:=94967968) (by decide) v132 c133 rfl (by decide) (by decide) rfl
+
+private def ps134 : List ℕ := 757::ps133
+
+private theorem h134_32 : R 32 sa32 270513510=30559096 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=270513510) (start:=270513510) rfl rfl rfl (by decide +kernel)
+private theorem h134_64 : R 64 sa64 270513510=26217757 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=270513510) (start:=30559096) rfl rfl h134_32 (by decide +kernel)
+private theorem h134_96 : R 96 sa96 270513510=24307093 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=270513510) (start:=26217757) rfl rfl h134_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h134_128 : R 128 sa128 270513510=23112852 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=270513510) (start:=24307093) rfl rfl h134_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c134 : R 133 ps133 270513510=22957299 :=
+  continue_at (portion:=sc133) (base:=sa128) (rank:=133) (baseRank:=128) (t:=270513510) (start:=23112852) rfl rfl h134_128 (by decide +kernel)
+private theorem v134 : R 134 ps134 204778727327=origin-141096959 :=
+  transfer (a:=133) (p:=757) (origin:=origin) (removed:=118139660) (by decide) v133 c134 rfl (by decide) (by decide) rfl
+
+private def ps135 : List ℕ := 761::ps134
+
+private theorem h135_32 : R 32 sa32 269091625=30398466 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=269091625) (start:=269091625) rfl rfl rfl (by decide +kernel)
+private theorem h135_64 : R 64 sa64 269091625=26080262 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=269091625) (start:=30398466) rfl rfl h135_32 (by decide +kernel)
+private theorem h135_96 : R 96 sa96 269091625=24179775 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=269091625) (start:=26080262) rfl rfl h135_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h135_128 : R 128 sa128 269091625=22991488 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=269091625) (start:=24179775) rfl rfl h135_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c135 : R 134 ps134 269091625=22806390 :=
+  continue_at (portion:=sc134) (base:=sa128) (rank:=134) (baseRank:=128) (t:=269091625) (start:=22991488) rfl rfl h135_128 (by decide +kernel)
+private theorem v135 : R 135 ps135 204778727327=origin-163903349 :=
+  transfer (a:=134) (p:=761) (origin:=origin) (removed:=141096959) (by decide) v134 c135 rfl (by decide) (by decide) rfl
+
+private def ps136 : List ℕ := 769::ps135
+
+private theorem h136_32 : R 32 sa32 266292233=30082156 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=266292233) (start:=266292233) rfl rfl rfl (by decide +kernel)
+private theorem h136_64 : R 64 sa64 266292233=25809417 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=266292233) (start:=30082156) rfl rfl h136_32 (by decide +kernel)
+private theorem h136_96 : R 96 sa96 266292233=23928884 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=266292233) (start:=25809417) rfl rfl h136_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h136_128 : R 128 sa128 266292233=22752347 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=266292233) (start:=23928884) rfl rfl h136_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c136 : R 135 ps135 266292233=22539165 :=
+  continue_at (portion:=sc135) (base:=sa128) (rank:=135) (baseRank:=128) (t:=266292233) (start:=22752347) rfl rfl h136_128 (by decide +kernel)
+private theorem v136 : R 136 ps136 204778727327=origin-186442514 :=
+  transfer (a:=135) (p:=769) (origin:=origin) (removed:=163903349) (by decide) v135 c136 rfl (by decide) (by decide) rfl
+
+private def ps137 : List ℕ := 773::ps136
+
+private theorem h137_32 : R 32 sa32 264914265=29926429 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=264914265) (start:=264914265) rfl rfl rfl (by decide +kernel)
+private theorem h137_64 : R 64 sa64 264914265=25676024 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=264914265) (start:=29926429) rfl rfl h137_32 (by decide +kernel)
+private theorem h137_96 : R 96 sa96 264914265=23805386 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=264914265) (start:=25676024) rfl rfl h137_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h137_128 : R 128 sa128 264914265=22634540 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=264914265) (start:=23805386) rfl rfl h137_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c137 : R 136 ps136 264914265=22392970 :=
+  continue_at (portion:=sc136) (base:=sa128) (rank:=136) (baseRank:=128) (t:=264914265) (start:=22634540) rfl rfl h137_128 (by decide +kernel)
+private theorem v137 : R 137 ps137 204778727327=origin-208835484 :=
+  transfer (a:=136) (p:=773) (origin:=origin) (removed:=186442514) (by decide) v136 c137 rfl (by decide) (by decide) rfl
+
+private def ps138 : List ℕ := 787::ps137
+
+private theorem h138_32 : R 32 sa32 260201686=29393967 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=260201686) (start:=260201686) rfl rfl rfl (by decide +kernel)
+private theorem h138_64 : R 64 sa64 260201686=25220088 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=260201686) (start:=29393967) rfl rfl h138_32 (by decide +kernel)
+private theorem h138_96 : R 96 sa96 260201686=23383091 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=260201686) (start:=25220088) rfl rfl h138_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h138_128 : R 128 sa128 260201686=22231849 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=260201686) (start:=23383091) rfl rfl h138_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c138 : R 137 ps137 260201686=21965419 :=
+  continue_at (portion:=sc137) (base:=sa128) (rank:=137) (baseRank:=128) (t:=260201686) (start:=22231849) rfl rfl h138_128 (by decide +kernel)
+private theorem v138 : R 138 ps138 204778727327=origin-230800903 :=
+  transfer (a:=137) (p:=787) (origin:=origin) (removed:=208835484) (by decide) v137 c138 rfl (by decide) (by decide) rfl
+
+private def ps139 : List ℕ := 797::ps138
+
+private theorem h139_32 : R 32 sa32 256936922=29025077 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=256936922) (start:=256936922) rfl rfl rfl (by decide +kernel)
+private theorem h139_64 : R 64 sa64 256936922=24904128 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=256936922) (start:=29025077) rfl rfl h139_32 (by decide +kernel)
+private theorem h139_96 : R 96 sa96 256936922=23090417 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=256936922) (start:=24904128) rfl rfl h139_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h139_128 : R 128 sa128 256936922=21952838 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=256936922) (start:=23090417) rfl rfl h139_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c139 : R 138 ps138 256936922=21661523 :=
+  continue_at (portion:=sc138) (base:=sa128) (rank:=138) (baseRank:=128) (t:=256936922) (start:=21952838) rfl rfl h139_128 (by decide +kernel)
+private theorem v139 : R 139 ps139 204778727327=origin-252462426 :=
+  transfer (a:=138) (p:=797) (origin:=origin) (removed:=230800903) (by decide) v138 c139 rfl (by decide) (by decide) rfl
+
+private def ps140 : List ℕ := 809::ps139
+
+private theorem h140_32 : R 32 sa32 253125744=28594516 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=253125744) (start:=253125744) rfl rfl rfl (by decide +kernel)
+private theorem h140_64 : R 64 sa64 253125744=24535373 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=253125744) (start:=28594516) rfl rfl h140_32 (by decide +kernel)
+private theorem h140_96 : R 96 sa96 253125744=22748836 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=253125744) (start:=24535373) rfl rfl h140_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h140_128 : R 128 sa128 253125744=21627167 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=253125744) (start:=22748836) rfl rfl h140_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c140 : R 139 ps139 253125744=21312564 :=
+  continue_at (portion:=sc139) (base:=sa128) (rank:=139) (baseRank:=128) (t:=253125744) (start:=21627167) rfl rfl h140_128 (by decide +kernel)
+private theorem v140 : R 140 ps140 204778727327=origin-273774990 :=
+  transfer (a:=139) (p:=809) (origin:=origin) (removed:=252462426) (by decide) v139 c140 rfl (by decide) (by decide) rfl
+
+private def ps141 : List ℕ := 811::ps140
+
+private theorem h141_32 : R 32 sa32 252501513=28523991 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=252501513) (start:=252501513) rfl rfl rfl (by decide +kernel)
+private theorem h141_64 : R 64 sa64 252501513=24475021 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=252501513) (start:=28523991) rfl rfl h141_32 (by decide +kernel)
+private theorem h141_96 : R 96 sa96 252501513=22692933 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=252501513) (start:=24475021) rfl rfl h141_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h141_128 : R 128 sa128 252501513=21573812 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=252501513) (start:=22692933) rfl rfl h141_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c141 : R 140 ps140 252501513=21233087 :=
+  continue_at (portion:=sc140) (base:=sa128) (rank:=140) (baseRank:=128) (t:=252501513) (start:=21573812) rfl rfl h141_128 (by decide +kernel)
+private theorem v141 : R 141 ps141 204778727327=origin-295008077 :=
+  transfer (a:=140) (p:=811) (origin:=origin) (removed:=273774990) (by decide) v140 c141 rfl (by decide) (by decide) rfl
+
+private def ps142 : List ℕ := 821::ps141
+
+private theorem h142_32 : R 32 sa32 249425977=28176444 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=249425977) (start:=249425977) rfl rfl rfl (by decide +kernel)
+private theorem h142_64 : R 64 sa64 249425977=24177425 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=249425977) (start:=28176444) rfl rfl h142_32 (by decide +kernel)
+private theorem h142_96 : R 96 sa96 249425977=22417277 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=249425977) (start:=24177425) rfl rfl h142_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h142_128 : R 128 sa128 249425977=21310967 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=249425977) (start:=22417277) rfl rfl h142_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c142 : R 141 ps141 249425977=20947610 :=
+  continue_at (portion:=sc141) (base:=sa128) (rank:=141) (baseRank:=128) (t:=249425977) (start:=21310967) rfl rfl h142_128 (by decide +kernel)
+private theorem v142 : R 142 ps142 204778727327=origin-315955687 :=
+  transfer (a:=141) (p:=821) (origin:=origin) (removed:=295008077) (by decide) v141 c142 rfl (by decide) (by decide) rfl
+
+private def ps143 : List ℕ := 823::ps142
+
+private theorem h143_32 : R 32 sa32 248819838=28107993 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=248819838) (start:=248819838) rfl rfl rfl (by decide +kernel)
+private theorem h143_64 : R 64 sa64 248819838=24118809 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=248819838) (start:=28107993) rfl rfl h143_32 (by decide +kernel)
+private theorem h143_96 : R 96 sa96 248819838=22362936 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=248819838) (start:=24118809) rfl rfl h143_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h143_128 : R 128 sa128 248819838=21259156 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=248819838) (start:=22362936) rfl rfl h143_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c143 : R 142 ps142 248819838=20870520 :=
+  continue_at (portion:=sc142) (base:=sa128) (rank:=142) (baseRank:=128) (t:=248819838) (start:=21259156) rfl rfl h143_128 (by decide +kernel)
+private theorem v143 : R 143 ps143 204778727327=origin-336826207 :=
+  transfer (a:=142) (p:=823) (origin:=origin) (removed:=315955687) (by decide) v142 c143 rfl (by decide) (by decide) rfl
+
+private def ps144 : List ℕ := 827::ps143
+
+private theorem h144_32 : R 32 sa32 247616357=27971978 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=247616357) (start:=247616357) rfl rfl rfl (by decide +kernel)
+private theorem h144_64 : R 64 sa64 247616357=24002317 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=247616357) (start:=27971978) rfl rfl h144_32 (by decide +kernel)
+private theorem h144_96 : R 96 sa96 247616357=22255043 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=247616357) (start:=24002317) rfl rfl h144_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h144_128 : R 128 sa128 247616357=21156279 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=247616357) (start:=22255043) rfl rfl h144_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c144 : R 143 ps143 247616357=20743431 :=
+  continue_at (portion:=sc143) (base:=sa128) (rank:=143) (baseRank:=128) (t:=247616357) (start:=21156279) rfl rfl h144_128 (by decide +kernel)
+private theorem v144 : R 144 ps144 204778727327=origin-357569638 :=
+  transfer (a:=143) (p:=827) (origin:=origin) (removed:=336826207) (by decide) v143 c144 rfl (by decide) (by decide) rfl
+
+private def ps145 : List ℕ := 829::ps144
+
+private theorem h145_32 : R 32 sa32 247018971=27904499 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=247018971) (start:=247018971) rfl rfl rfl (by decide +kernel)
+private theorem h145_64 : R 64 sa64 247018971=23944515 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=247018971) (start:=27904499) rfl rfl h145_32 (by decide +kernel)
+private theorem h145_96 : R 96 sa96 247018971=22201511 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=247018971) (start:=23944515) rfl rfl h145_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h145_128 : R 128 sa128 247018971=21105227 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=247018971) (start:=22201511) rfl rfl h145_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c145 : R 144 ps144 247018971=20667554 :=
+  continue_at (portion:=sc144) (base:=sa128) (rank:=144) (baseRank:=128) (t:=247018971) (start:=21105227) rfl rfl h145_128 (by decide +kernel)
+private theorem v145 : R 145 ps145 204778727327=origin-378237192 :=
+  transfer (a:=144) (p:=829) (origin:=origin) (removed:=357569638) (by decide) v144 c145 rfl (by decide) (by decide) rfl
+
+private def ps146 : List ℕ := 839::ps145
+
+private theorem h146_32 : R 32 sa32 244074764=27571853 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=244074764) (start:=244074764) rfl rfl rfl (by decide +kernel)
+private theorem h146_64 : R 64 sa64 244074764=23659612 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=244074764) (start:=27571853) rfl rfl h146_32 (by decide +kernel)
+private theorem h146_96 : R 96 sa96 244074764=21937572 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=244074764) (start:=23659612) rfl rfl h146_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h146_128 : R 128 sa128 244074764=20853567 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=244074764) (start:=21937572) rfl rfl h146_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c146 : R 145 ps145 244074764=20395277 :=
+  continue_at (portion:=sc145) (base:=sa128) (rank:=145) (baseRank:=128) (t:=244074764) (start:=20853567) rfl rfl h146_128 (by decide +kernel)
+private theorem v146 : R 146 ps146 204778727327=origin-398632469 :=
+  transfer (a:=145) (p:=839) (origin:=origin) (removed:=378237192) (by decide) v145 c146 rfl (by decide) (by decide) rfl
+
+private def ps147 : List ℕ := 853::ps146
+
+private theorem h147_32 : R 32 sa32 240068847=27119250 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=240068847) (start:=240068847) rfl rfl rfl (by decide +kernel)
+private theorem h147_64 : R 64 sa64 240068847=23272052 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=240068847) (start:=27119250) rfl rfl h147_32 (by decide +kernel)
+private theorem h147_96 : R 96 sa96 240068847=21578509 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=240068847) (start:=23272052) rfl rfl h147_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h147_128 : R 128 sa128 240068847=20511183 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=240068847) (start:=21578509) rfl rfl h147_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c147 : R 146 ps146 240068847=20035056 :=
+  continue_at (portion:=sc146) (base:=sa128) (rank:=146) (baseRank:=128) (t:=240068847) (start:=20511183) rfl rfl h147_128 (by decide +kernel)
+private theorem v147 : R 147 ps147 204778727327=origin-418667525 :=
+  transfer (a:=146) (p:=853) (origin:=origin) (removed:=398632469) (by decide) v146 c147 rfl (by decide) (by decide) rfl
+
+private def ps148 : List ℕ := 857::ps147
+
+private theorem h148_32 : R 32 sa32 238948339=26992625 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=238948339) (start:=238948339) rfl rfl rfl (by decide +kernel)
+private theorem h148_64 : R 64 sa64 238948339=23163571 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=238948339) (start:=26992625) rfl rfl h148_32 (by decide +kernel)
+private theorem h148_96 : R 96 sa96 238948339=21478073 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=238948339) (start:=23163571) rfl rfl h148_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h148_128 : R 128 sa128 238948339=20415412 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=238948339) (start:=21478073) rfl rfl h148_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c148 : R 147 ps147 238948339=19917051 :=
+  continue_at (portion:=sc147) (base:=sa128) (rank:=147) (baseRank:=128) (t:=238948339) (start:=20415412) rfl rfl h148_128 (by decide +kernel)
+private theorem v148 : R 148 ps148 204778727327=origin-438584576 :=
+  transfer (a:=147) (p:=857) (origin:=origin) (removed:=418667525) (by decide) v147 c148 rfl (by decide) (by decide) rfl
+
+private def ps149 : List ℕ := 859::ps148
+
+private theorem h149_32 : R 32 sa32 238391999=26929753 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=238391999) (start:=238391999) rfl rfl rfl (by decide +kernel)
+private theorem h149_64 : R 64 sa64 238391999=23109750 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=238391999) (start:=26929753) rfl rfl h149_32 (by decide +kernel)
+private theorem h149_96 : R 96 sa96 238391999=21428171 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=238391999) (start:=23109750) rfl rfl h149_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h149_128 : R 128 sa128 238391999=20367822 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=238391999) (start:=21428171) rfl rfl h149_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c149 : R 148 ps148 238391999=19846397 :=
+  continue_at (portion:=sc148) (base:=sa128) (rank:=148) (baseRank:=128) (t:=238391999) (start:=20367822) rfl rfl h149_128 (by decide +kernel)
+private theorem v149 : R 149 ps149 204778727327=origin-458430973 :=
+  transfer (a:=148) (p:=859) (origin:=origin) (removed:=438584576) (by decide) v148 c149 rfl (by decide) (by decide) rfl
+
+private def ps150 : List ℕ := 863::ps149
+
+set_option maxRecDepth 16000 in
+private theorem h150_32 : R 32 sa32 237287053=26804914 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=237287053) (start:=237287053) rfl rfl rfl (by decide +kernel)
+private theorem h150_64 : R 64 sa64 237287053=23002788 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=237287053) (start:=26804914) rfl rfl h150_32 (by decide +kernel)
+private theorem h150_96 : R 96 sa96 237287053=21329104 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=237287053) (start:=23002788) rfl rfl h150_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h150_128 : R 128 sa128 237287053=20273307 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=237287053) (start:=21329104) rfl rfl h150_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c150 : R 149 ps149 237287053=19730073 :=
+  continue_at (portion:=sc149) (base:=sa128) (rank:=149) (baseRank:=128) (t:=237287053) (start:=20273307) rfl rfl h150_128 (by decide +kernel)
+private theorem v150 : R 150 ps150 204778727327=origin-478161046 :=
+  transfer (a:=149) (p:=863) (origin:=origin) (removed:=458430973) (by decide) v149 c150 rfl (by decide) (by decide) rfl
+
+private def ps151 : List ℕ := 877::ps150
+
+set_option maxRecDepth 16000 in
+private theorem h151_32 : R 32 sa32 233499118=26376940 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=233499118) (start:=233499118) rfl rfl rfl (by decide +kernel)
+private theorem h151_64 : R 64 sa64 233499118=22636187 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=233499118) (start:=26376940) rfl rfl h151_32 (by decide +kernel)
+private theorem h151_96 : R 96 sa96 233499118=20989370 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=233499118) (start:=22636187) rfl rfl h151_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h151_128 : R 128 sa128 233499118=19949412 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=233499118) (start:=20989370) rfl rfl h151_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c151 : R 150 ps150 233499118=19390609 :=
+  continue_at (portion:=sc150) (base:=sa128) (rank:=150) (baseRank:=128) (t:=233499118) (start:=19949412) rfl rfl h151_128 (by decide +kernel)
+private theorem v151 : R 151 ps151 204778727327=origin-497551655 :=
+  transfer (a:=150) (p:=877) (origin:=origin) (removed:=478161046) (by decide) v150 c151 rfl (by decide) (by decide) rfl
+
+private def ps152 : List ℕ := 881::ps151
+
+set_option maxRecDepth 16000 in
+private theorem h152_32 : R 32 sa32 232438964=26257159 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=232438964) (start:=232438964) rfl rfl rfl (by decide +kernel)
+private theorem h152_64 : R 64 sa64 232438964=22533655 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=232438964) (start:=26257159) rfl rfl h152_32 (by decide +kernel)
+private theorem h152_96 : R 96 sa96 232438964=20894416 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=232438964) (start:=22533655) rfl rfl h152_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h152_128 : R 128 sa128 232438964=19858834 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=232438964) (start:=20894416) rfl rfl h152_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c152 : R 151 ps151 232438964=19279241 :=
+  continue_at (portion:=sc151) (base:=sa128) (rank:=151) (baseRank:=128) (t:=232438964) (start:=19858834) rfl rfl h152_128 (by decide +kernel)
+private theorem v152 : R 152 ps152 204778727327=origin-516830896 :=
+  transfer (a:=151) (p:=881) (origin:=origin) (removed:=497551655) (by decide) v151 c152 rfl (by decide) (by decide) rfl
+
+private def ps153 : List ℕ := 883::ps152
+
+set_option maxRecDepth 16000 in
+private theorem h153_32 : R 32 sa32 231912488=26197678 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=231912488) (start:=231912488) rfl rfl rfl (by decide +kernel)
+private theorem h153_64 : R 64 sa64 231912488=22482713 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=231912488) (start:=26197678) rfl rfl h153_32 (by decide +kernel)
+private theorem h153_96 : R 96 sa96 231912488=20847211 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=231912488) (start:=22482713) rfl rfl h153_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h153_128 : R 128 sa128 231912488=19813818 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=231912488) (start:=20847211) rfl rfl h153_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c153 : R 152 ps152 231912488=19212553 :=
+  continue_at (portion:=sc152) (base:=sa128) (rank:=152) (baseRank:=128) (t:=231912488) (start:=19813818) rfl rfl h153_128 (by decide +kernel)
+private theorem v153 : R 153 ps153 204778727327=origin-536043449 :=
+  transfer (a:=152) (p:=883) (origin:=origin) (removed:=516830896) (by decide) v152 c153 rfl (by decide) (by decide) rfl
+
+private def ps154 : List ℕ := 887::ps153
+
+set_option maxRecDepth 16000 in
+private theorem h154_32 : R 32 sa32 230866659=26079506 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=230866659) (start:=230866659) rfl rfl rfl (by decide +kernel)
+private theorem h154_64 : R 64 sa64 230866659=22381542 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=230866659) (start:=26079506) rfl rfl h154_32 (by decide +kernel)
+private theorem h154_96 : R 96 sa96 230866659=20753428 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=230866659) (start:=22381542) rfl rfl h154_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h154_128 : R 128 sa128 230866659=19724414 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=230866659) (start:=20753428) rfl rfl h154_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c154 : R 153 ps153 230866659=19102855 :=
+  continue_at (portion:=sc153) (base:=sa128) (rank:=153) (baseRank:=128) (t:=230866659) (start:=19724414) rfl rfl h154_128 (by decide +kernel)
+private theorem v154 : R 154 ps154 204778727327=origin-555146304 :=
+  transfer (a:=153) (p:=887) (origin:=origin) (removed:=536043449) (by decide) v153 c154 rfl (by decide) (by decide) rfl
+
+private def ps155 : List ℕ := 907::ps154
+
+set_option maxRecDepth 16000 in
+private theorem h155_32 : R 32 sa32 225775884=25504317 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=225775884) (start:=225775884) rfl rfl rfl (by decide +kernel)
+private theorem h155_64 : R 64 sa64 225775884=21888880 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=225775884) (start:=25504317) rfl rfl h155_32 (by decide +kernel)
+private theorem h155_96 : R 96 sa96 225775884=20296997 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=225775884) (start:=21888880) rfl rfl h155_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h155_128 : R 128 sa128 225775884=19289131 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=225775884) (start:=20296997) rfl rfl h155_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c155 : R 154 ps154 225775884=18657875 :=
+  continue_at (portion:=sc154) (base:=sa128) (rank:=154) (baseRank:=128) (t:=225775884) (start:=19289131) rfl rfl h155_128 (by decide +kernel)
+private theorem v155 : R 155 ps155 204778727327=origin-573804179 :=
+  transfer (a:=154) (p:=907) (origin:=origin) (removed:=555146304) (by decide) v154 c155 rfl (by decide) (by decide) rfl
+
+private def ps156 : List ℕ := 911::ps155
+
+set_option maxRecDepth 16000 in
+private theorem h156_32 : R 32 sa32 224784552=25392301 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=224784552) (start:=224784552) rfl rfl rfl (by decide +kernel)
+private theorem h156_64 : R 64 sa64 224784552=21792990 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=224784552) (start:=25392301) rfl rfl h156_32 (by decide +kernel)
+private theorem h156_96 : R 96 sa96 224784552=20208119 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=224784552) (start:=21792990) rfl rfl h156_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h156_128 : R 128 sa128 224784552=19204463 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=224784552) (start:=20208119) rfl rfl h156_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c156 : R 155 ps155 224784552=18554012 :=
+  continue_at (portion:=sc155) (base:=sa128) (rank:=155) (baseRank:=128) (t:=224784552) (start:=19204463) rfl rfl h156_128 (by decide +kernel)
+private theorem v156 : R 156 ps156 204778727327=origin-592358191 :=
+  transfer (a:=155) (p:=911) (origin:=origin) (removed:=573804179) (by decide) v155 c156 rfl (by decide) (by decide) rfl
+
+private def ps157 : List ℕ := 919::ps156
+
+set_option maxRecDepth 16000 in
+private theorem h157_32 : R 32 sa32 222827777=25171256 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=222827777) (start:=222827777) rfl rfl rfl (by decide +kernel)
+private theorem h157_64 : R 64 sa64 222827777=21603681 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=222827777) (start:=25171256) rfl rfl h157_32 (by decide +kernel)
+private theorem h157_96 : R 96 sa96 222827777=20032651 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=222827777) (start:=21603681) rfl rfl h157_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h157_128 : R 128 sa128 222827777=19037143 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=222827777) (start:=20032651) rfl rfl h157_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c157 : R 156 ps156 222827777=18370441 :=
+  continue_at (portion:=sc156) (base:=sa128) (rank:=156) (baseRank:=128) (t:=222827777) (start:=19037143) rfl rfl h157_128 (by decide +kernel)
+private theorem v157 : R 157 ps157 204778727327=origin-610728632 :=
+  transfer (a:=156) (p:=919) (origin:=origin) (removed:=592358191) (by decide) v156 c157 rfl (by decide) (by decide) rfl
+
+private def ps158 : List ℕ := 929::ps157
+
+set_option maxRecDepth 16000 in
+private theorem h158_32 : R 32 sa32 220429200=24900213 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=220429200) (start:=220429200) rfl rfl rfl (by decide +kernel)
+private theorem h158_64 : R 64 sa64 220429200=21371525 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=220429200) (start:=24900213) rfl rfl h158_32 (by decide +kernel)
+private theorem h158_96 : R 96 sa96 220429200=19817504 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=220429200) (start:=21371525) rfl rfl h158_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h158_128 : R 128 sa128 220429200=18831996 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=220429200) (start:=19817504) rfl rfl h158_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c158 : R 157 ps157 220429200=18150797 :=
+  continue_at (portion:=sc157) (base:=sa128) (rank:=157) (baseRank:=128) (t:=220429200) (start:=18831996) rfl rfl h158_128 (by decide +kernel)
+private theorem v158 : R 158 ps158 204778727327=origin-628879429 :=
+  transfer (a:=157) (p:=929) (origin:=origin) (removed:=610728632) (by decide) v157 c158 rfl (by decide) (by decide) rfl
+
+private def ps159 : List ℕ := 937::ps158
+
+set_option maxRecDepth 16000 in
+private theorem h159_32 : R 32 sa32 218547200=24687619 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=218547200) (start:=218547200) rfl rfl rfl (by decide +kernel)
+private theorem h159_64 : R 64 sa64 218547200=21189414 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=218547200) (start:=24687619) rfl rfl h159_32 (by decide +kernel)
+private theorem h159_96 : R 96 sa96 218547200=19648724 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=218547200) (start:=21189414) rfl rfl h159_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h159_128 : R 128 sa128 218547200=18671100 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=218547200) (start:=19648724) rfl rfl h159_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c159 : R 158 ps158 218547200=17974598 :=
+  continue_at (portion:=sc158) (base:=sa128) (rank:=158) (baseRank:=128) (t:=218547200) (start:=18671100) rfl rfl h159_128 (by decide +kernel)
+private theorem v159 : R 159 ps159 204778727327=origin-646854027 :=
+  transfer (a:=158) (p:=937) (origin:=origin) (removed:=628879429) (by decide) v158 c159 rfl (by decide) (by decide) rfl
+
+private def ps160 : List ℕ := 941::ps159
+
+set_option maxRecDepth 16000 in
+private theorem h160_32 : R 32 sa32 217618201=24582688 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=217618201) (start:=217618201) rfl rfl rfl (by decide +kernel)
+private theorem h160_64 : R 64 sa64 217618201=21099549 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=217618201) (start:=24582688) rfl rfl h160_32 (by decide +kernel)
+private theorem h160_96 : R 96 sa96 217618201=19565498 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=217618201) (start:=21099549) rfl rfl h160_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h160_128 : R 128 sa128 217618201=18591743 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=217618201) (start:=19565498) rfl rfl h160_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c160 : R 159 ps159 217618201=17877471 :=
+  continue_at (portion:=sc159) (base:=sa128) (rank:=159) (baseRank:=128) (t:=217618201) (start:=18591743) rfl rfl h160_128 (by decide +kernel)
+private theorem v160 : R 160 ps160 204778727327=origin-664731498 :=
+  transfer (a:=159) (p:=941) (origin:=origin) (removed:=646854027) (by decide) v159 c160 rfl (by decide) (by decide) rfl
+
+private def ps161 : List ℕ := 947::ps160
+
+set_option maxRecDepth 16000 in
+private theorem h161_32 : R 32 sa32 216239416=24426885 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=216239416) (start:=216239416) rfl rfl rfl (by decide +kernel)
+private theorem h161_64 : R 64 sa64 216239416=20966073 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=216239416) (start:=24426885) rfl rfl h161_32 (by decide +kernel)
+private theorem h161_96 : R 96 sa96 216239416=19441835 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=216239416) (start:=20966073) rfl rfl h161_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h161_128 : R 128 sa128 216239416=18473816 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=216239416) (start:=19441835) rfl rfl h161_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c161 : R 160 ps160 216239416=17743428 :=
+  continue_at (portion:=sc160) (base:=sa128) (rank:=160) (baseRank:=128) (t:=216239416) (start:=18473816) rfl rfl h161_128 (by decide +kernel)
+private theorem v161 : R 161 ps161 204778727327=origin-682474926 :=
+  transfer (a:=160) (p:=947) (origin:=origin) (removed:=664731498) (by decide) v160 c161 rfl (by decide) (by decide) rfl
+
+private def ps162 : List ℕ := 953::ps161
+
+set_option maxRecDepth 16000 in
+private theorem h162_32 : R 32 sa32 214877992=24273025 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=214877992) (start:=214877992) rfl rfl rfl (by decide +kernel)
+private theorem h162_64 : R 64 sa64 214877992=20834344 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=214877992) (start:=24273025) rfl rfl h162_32 (by decide +kernel)
+private theorem h162_96 : R 96 sa96 214877992=19319802 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=214877992) (start:=20834344) rfl rfl h162_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h162_128 : R 128 sa128 214877992=18357485 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=214877992) (start:=19319802) rfl rfl h162_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h162_160 : R 160 sa160 214877992=17631265 :=
+  continue_at (portion:=sc160) (base:=sa128) (rank:=160) (baseRank:=128) (t:=214877992) (start:=18357485) rfl rfl h162_128 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c162 : R 161 ps161 214877992=17611249 :=
+  continue_at (portion:=sc161) (base:=sa160) (rank:=161) (baseRank:=160) (t:=214877992) (start:=17631265) rfl rfl h162_160 (by decide +kernel)
+private theorem v162 : R 162 ps162 204778727327=origin-700086175 :=
+  transfer (a:=161) (p:=953) (origin:=origin) (removed:=682474926) (by decide) v161 c162 rfl (by decide) (by decide) rfl
+
+private def ps163 : List ℕ := 967::ps162
+
+set_option maxRecDepth 16000 in
+private theorem h163_32 : R 32 sa32 211767039=23921569 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=211767039) (start:=211767039) rfl rfl rfl (by decide +kernel)
+private theorem h163_64 : R 64 sa64 211767039=20533304 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=211767039) (start:=23921569) rfl rfl h163_32 (by decide +kernel)
+private theorem h163_96 : R 96 sa96 211767039=19040745 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=211767039) (start:=20533304) rfl rfl h163_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h163_128 : R 128 sa128 211767039=18091465 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=211767039) (start:=19040745) rfl rfl h163_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h163_160 : R 160 sa160 211767039=17374890 :=
+  continue_at (portion:=sc160) (base:=sa128) (rank:=160) (baseRank:=128) (t:=211767039) (start:=18091465) rfl rfl h163_128 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c163 : R 162 ps162 211767039=17335502 :=
+  continue_at (portion:=sc162) (base:=sa160) (rank:=162) (baseRank:=160) (t:=211767039) (start:=17374890) rfl rfl h163_160 (by decide +kernel)
+private theorem v163 : R 163 ps163 204778727327=origin-717421677 :=
+  transfer (a:=162) (p:=967) (origin:=origin) (removed:=700086175) (by decide) v162 c163 rfl (by decide) (by decide) rfl
+
+private def ps164 : List ℕ := 971::ps163
+
+set_option maxRecDepth 16000 in
+private theorem h164_32 : R 32 sa32 210894672=23822985 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=210894672) (start:=210894672) rfl rfl rfl (by decide +kernel)
+private theorem h164_64 : R 64 sa64 210894672=20448875 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=210894672) (start:=23822985) rfl rfl h164_32 (by decide +kernel)
+private theorem h164_96 : R 96 sa96 210894672=18962482 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=210894672) (start:=20448875) rfl rfl h164_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h164_128 : R 128 sa128 210894672=18016832 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=210894672) (start:=18962482) rfl rfl h164_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h164_160 : R 160 sa160 210894672=17302974 :=
+  continue_at (portion:=sc160) (base:=sa128) (rank:=160) (baseRank:=128) (t:=210894672) (start:=18016832) rfl rfl h164_128 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c164 : R 163 ps163 210894672=17244452 :=
+  continue_at (portion:=sc163) (base:=sa160) (rank:=163) (baseRank:=160) (t:=210894672) (start:=17302974) rfl rfl h164_160 (by decide +kernel)
+private theorem v164 : R 164 ps164 204778727327=origin-734666129 :=
+  transfer (a:=163) (p:=971) (origin:=origin) (removed:=717421677) (by decide) v163 c164 rfl (by decide) (by decide) rfl
+
+private def ps165 : List ℕ := 977::ps164
+
+set_option maxRecDepth 16000 in
+private theorem h165_32 : R 32 sa32 209599516=23676692 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=209599516) (start:=209599516) rfl rfl rfl (by decide +kernel)
+private theorem h165_64 : R 64 sa64 209599516=20323545 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=209599516) (start:=23676692) rfl rfl h165_32 (by decide +kernel)
+private theorem h165_96 : R 96 sa96 209599516=18846377 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=209599516) (start:=20323545) rfl rfl h165_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h165_128 : R 128 sa128 209599516=17906094 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=209599516) (start:=18846377) rfl rfl h165_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h165_160 : R 160 sa160 209599516=17196252 :=
+  continue_at (portion:=sc160) (base:=sa128) (rank:=160) (baseRank:=128) (t:=209599516) (start:=17906094) rfl rfl h165_128 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c165 : R 164 ps164 209599516=17118943 :=
+  continue_at (portion:=sc164) (base:=sa160) (rank:=164) (baseRank:=160) (t:=209599516) (start:=17196252) rfl rfl h165_160 (by decide +kernel)
+private theorem v165 : R 165 ps165 204778727327=origin-751785072 :=
+  transfer (a:=164) (p:=977) (origin:=origin) (removed:=734666129) (by decide) v164 c165 rfl (by decide) (by decide) rfl
+
+private def ps166 : List ℕ := 983::ps165
+
+set_option maxRecDepth 16000 in
+private theorem h166_32 : R 32 sa32 208320170=23532155 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=208320170) (start:=208320170) rfl rfl rfl (by decide +kernel)
+private theorem h166_64 : R 64 sa64 208320170=20199716 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=208320170) (start:=23532155) rfl rfl h166_32 (by decide +kernel)
+private theorem h166_96 : R 96 sa96 208320170=18731575 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=208320170) (start:=20199716) rfl rfl h166_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h166_128 : R 128 sa128 208320170=17796653 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=208320170) (start:=18731575) rfl rfl h166_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h166_160 : R 160 sa160 208320170=17090790 :=
+  continue_at (portion:=sc160) (base:=sa128) (rank:=160) (baseRank:=128) (t:=208320170) (start:=17796653) rfl rfl h166_128 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c166 : R 165 ps165 208320170=16995004 :=
+  continue_at (portion:=sc165) (base:=sa160) (rank:=165) (baseRank:=160) (t:=208320170) (start:=17090790) rfl rfl h166_160 (by decide +kernel)
+private theorem v166 : R 166 ps166 204778727327=origin-768780076 :=
+  transfer (a:=165) (p:=983) (origin:=origin) (removed:=751785072) (by decide) v165 c166 rfl (by decide) (by decide) rfl
+
+private def ps167 : List ℕ := 991::ps166
+
+set_option maxRecDepth 16000 in
+private theorem h167_32 : R 32 sa32 206638473=23342136 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=206638473) (start:=206638473) rfl rfl rfl (by decide +kernel)
+private theorem h167_64 : R 64 sa64 206638473=20036976 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=206638473) (start:=23342136) rfl rfl h167_32 (by decide +kernel)
+private theorem h167_96 : R 96 sa96 206638473=18580727 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=206638473) (start:=20036976) rfl rfl h167_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h167_128 : R 128 sa128 206638473=17652813 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=206638473) (start:=18580727) rfl rfl h167_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h167_160 : R 160 sa160 206638473=16952169 :=
+  continue_at (portion:=sc160) (base:=sa128) (rank:=160) (baseRank:=128) (t:=206638473) (start:=17652813) rfl rfl h167_128 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c167 : R 166 ps166 206638473=16838433 :=
+  continue_at (portion:=sc166) (base:=sa160) (rank:=166) (baseRank:=160) (t:=206638473) (start:=16952169) rfl rfl h167_160 (by decide +kernel)
+private theorem v167 : R 167 ps167 204778727327=origin-785618509 :=
+  transfer (a:=166) (p:=991) (origin:=origin) (removed:=768780076) (by decide) v166 c167 rfl (by decide) (by decide) rfl
+
+private def ps168 : List ℕ := 997::ps167
+
+set_option maxRecDepth 16000 in
+private theorem h168_32 : R 32 sa32 205394912=23201654 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=205394912) (start:=205394912) rfl rfl rfl (by decide +kernel)
+private theorem h168_64 : R 64 sa64 205394912=19916702 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=205394912) (start:=23201654) rfl rfl h168_32 (by decide +kernel)
+private theorem h168_96 : R 96 sa96 205394912=18469284 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=205394912) (start:=19916702) rfl rfl h168_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h168_128 : R 128 sa128 205394912=17546531 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=205394912) (start:=18469284) rfl rfl h168_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h168_160 : R 160 sa160 205394912=16849758 :=
+  continue_at (portion:=sc160) (base:=sa128) (rank:=160) (baseRank:=128) (t:=205394912) (start:=17546531) rfl rfl h168_128 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c168 : R 167 ps167 205394912=16718237 :=
+  continue_at (portion:=sc167) (base:=sa160) (rank:=167) (baseRank:=160) (t:=205394912) (start:=16849758) rfl rfl h168_160 (by decide +kernel)
+private theorem v168 : R 168 ps168 204778727327=origin-802336746 :=
+  transfer (a:=167) (p:=997) (origin:=origin) (removed:=785618509) (by decide) v167 c168 rfl (by decide) (by decide) rfl
+
+private def ps169 : List ℕ := 1009::ps168
+
+set_option maxRecDepth 16000 in
+private theorem h169_32 : R 32 sa32 202952157=22925638 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=202952157) (start:=202952157) rfl rfl rfl (by decide +kernel)
+private theorem h169_64 : R 64 sa64 202952157=19680213 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=202952157) (start:=22925638) rfl rfl h169_32 (by decide +kernel)
+private theorem h169_96 : R 96 sa96 202952157=18250055 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=202952157) (start:=19680213) rfl rfl h169_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h169_128 : R 128 sa128 202952157=17337528 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=202952157) (start:=18250055) rfl rfl h169_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h169_160 : R 160 sa160 202952157=16648375 :=
+  continue_at (portion:=sc160) (base:=sa128) (rank:=160) (baseRank:=128) (t:=202952157) (start:=17337528) rfl rfl h169_128 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c169 : R 168 ps168 202952157=16500207 :=
+  continue_at (portion:=sc168) (base:=sa160) (rank:=168) (baseRank:=160) (t:=202952157) (start:=16648375) rfl rfl h169_160 (by decide +kernel)
+private theorem v169 : R 169 ps169 204778727327=origin-818836953 :=
+  transfer (a:=168) (p:=1009) (origin:=origin) (removed:=802336746) (by decide) v168 c169 rfl (by decide) (by decide) rfl
+
+private def ps170 : List ℕ := 1013::ps169
+
+set_option maxRecDepth 16000 in
+private theorem h170_32 : R 32 sa32 202150767=22835066 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=202150767) (start:=202150767) rfl rfl rfl (by decide +kernel)
+private theorem h170_64 : R 64 sa64 202150767=19602683 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=202150767) (start:=22835066) rfl rfl h170_32 (by decide +kernel)
+private theorem h170_96 : R 96 sa96 202150767=18178195 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=202150767) (start:=19602683) rfl rfl h170_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h170_128 : R 128 sa128 202150767=17269018 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=202150767) (start:=18178195) rfl rfl h170_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h170_160 : R 160 sa160 202150767=16582348 :=
+  continue_at (portion:=sc160) (base:=sa128) (rank:=160) (baseRank:=128) (t:=202150767) (start:=17269018) rfl rfl h170_128 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c170 : R 169 ps169 202150767=16416876 :=
+  continue_at (portion:=sc169) (base:=sa160) (rank:=169) (baseRank:=160) (t:=202150767) (start:=16582348) rfl rfl h170_160 (by decide +kernel)
+private theorem v170 : R 170 ps170 204778727327=origin-835253829 :=
+  transfer (a:=169) (p:=1013) (origin:=origin) (removed:=818836953) (by decide) v169 c170 rfl (by decide) (by decide) rfl
+
+private def ps171 : List ℕ := 1019::ps170
+
+set_option maxRecDepth 16000 in
+private theorem h171_32 : R 32 sa32 200960478=22700658 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=200960478) (start:=200960478) rfl rfl rfl (by decide +kernel)
+private theorem h171_64 : R 64 sa64 200960478=19487528 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=200960478) (start:=22700658) rfl rfl h171_32 (by decide +kernel)
+private theorem h171_96 : R 96 sa96 200960478=18071446 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=200960478) (start:=19487528) rfl rfl h171_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h171_128 : R 128 sa128 200960478=17167218 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=200960478) (start:=18071446) rfl rfl h171_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h171_160 : R 160 sa160 200960478=16484280 :=
+  continue_at (portion:=sc160) (base:=sa128) (rank:=160) (baseRank:=128) (t:=200960478) (start:=17167218) rfl rfl h171_128 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c171 : R 170 ps170 200960478=16302015 :=
+  continue_at (portion:=sc170) (base:=sa160) (rank:=170) (baseRank:=160) (t:=200960478) (start:=16484280) rfl rfl h171_160 (by decide +kernel)
+private theorem v171 : R 171 ps171 204778727327=origin-851555844 :=
+  transfer (a:=170) (p:=1019) (origin:=origin) (removed:=835253829) (by decide) v170 c171 rfl (by decide) (by decide) rfl
+
+private def ps172 : List ℕ := 1021::ps171
+
+set_option maxRecDepth 16000 in
+private theorem h172_32 : R 32 sa32 200566824=22656154 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=200566824) (start:=200566824) rfl rfl rfl (by decide +kernel)
+private theorem h172_64 : R 64 sa64 200566824=19449392 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=200566824) (start:=22656154) rfl rfl h172_32 (by decide +kernel)
+private theorem h172_96 : R 96 sa96 200566824=18036105 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=200566824) (start:=19449392) rfl rfl h172_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h172_128 : R 128 sa128 200566824=17133525 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=200566824) (start:=18036105) rfl rfl h172_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h172_160 : R 160 sa160 200566824=16451824 :=
+  continue_at (portion:=sc160) (base:=sa128) (rank:=160) (baseRank:=128) (t:=200566824) (start:=17133525) rfl rfl h172_128 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c172 : R 171 ps171 200566824=16252328 :=
+  continue_at (portion:=sc171) (base:=sa160) (rank:=171) (baseRank:=160) (t:=200566824) (start:=16451824) rfl rfl h172_160 (by decide +kernel)
+private theorem v172 : R 172 ps172 204778727327=origin-867808172 :=
+  transfer (a:=171) (p:=1021) (origin:=origin) (removed:=851555844) (by decide) v171 c172 rfl (by decide) (by decide) rfl
+
+private def ps173 : List ℕ := 1031::ps172
+
+set_option maxRecDepth 16000 in
+private theorem h173_32 : R 32 sa32 198621462=22436363 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=198621462) (start:=198621462) rfl rfl rfl (by decide +kernel)
+private theorem h173_64 : R 64 sa64 198621462=19261174 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=198621462) (start:=22436363) rfl rfl h173_32 (by decide +kernel)
+private theorem h173_96 : R 96 sa96 198621462=17861640 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=198621462) (start:=19261174) rfl rfl h173_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h173_128 : R 128 sa128 198621462=16967184 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=198621462) (start:=17861640) rfl rfl h173_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h173_160 : R 160 sa160 198621462=16291504 :=
+  continue_at (portion:=sc160) (base:=sa128) (rank:=160) (baseRank:=128) (t:=198621462) (start:=16967184) rfl rfl h173_128 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c173 : R 172 ps172 198621462=16076436 :=
+  continue_at (portion:=sc172) (base:=sa160) (rank:=172) (baseRank:=160) (t:=198621462) (start:=16291504) rfl rfl h173_160 (by decide +kernel)
+private theorem v173 : R 173 ps173 204778727327=origin-883884608 :=
+  transfer (a:=172) (p:=1031) (origin:=origin) (removed:=867808172) (by decide) v172 c173 rfl (by decide) (by decide) rfl
+
+private def ps174 : List ℕ := 1033::ps173
+
+set_option maxRecDepth 16000 in
+private theorem h174_32 : R 32 sa32 198236909=22392926 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=198236909) (start:=198236909) rfl rfl rfl (by decide +kernel)
+private theorem h174_64 : R 64 sa64 198236909=19223955 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=198236909) (start:=22392926) rfl rfl h174_32 (by decide +kernel)
+private theorem h174_96 : R 96 sa96 198236909=17827103 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=198236909) (start:=19223955) rfl rfl h174_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h174_128 : R 128 sa128 198236909=16934246 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=198236909) (start:=17827103) rfl rfl h174_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h174_160 : R 160 sa160 198236909=16259768 :=
+  continue_at (portion:=sc160) (base:=sa128) (rank:=160) (baseRank:=128) (t:=198236909) (start:=16934246) rfl rfl h174_128 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c174 : R 173 ps173 198236909=16027902 :=
+  continue_at (portion:=sc173) (base:=sa160) (rank:=173) (baseRank:=160) (t:=198236909) (start:=16259768) rfl rfl h174_160 (by decide +kernel)
+private theorem v174 : R 174 ps174 204778727327=origin-899912510 :=
+  transfer (a:=173) (p:=1033) (origin:=origin) (removed:=883884608) (by decide) v173 c174 rfl (by decide) (by decide) rfl
+
+private def ps175 : List ℕ := 1039::ps174
+
+set_option maxRecDepth 16000 in
+private theorem h175_32 : R 32 sa32 197092134=22263600 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=197092134) (start:=197092134) rfl rfl rfl (by decide +kernel)
+private theorem h175_64 : R 64 sa64 197092134=19113203 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=197092134) (start:=22263600) rfl rfl h175_32 (by decide +kernel)
+private theorem h175_96 : R 96 sa96 197092134=17724470 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=197092134) (start:=19113203) rfl rfl h175_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h175_128 : R 128 sa128 197092134=16836402 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=197092134) (start:=17724470) rfl rfl h175_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h175_160 : R 160 sa160 197092134=16165529 :=
+  continue_at (portion:=sc160) (base:=sa128) (rank:=160) (baseRank:=128) (t:=197092134) (start:=16836402) rfl rfl h175_128 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c175 : R 174 ps174 197092134=15917831 :=
+  continue_at (portion:=sc174) (base:=sa160) (rank:=174) (baseRank:=160) (t:=197092134) (start:=16165529) rfl rfl h175_160 (by decide +kernel)
+private theorem v175 : R 175 ps175 204778727327=origin-915830341 :=
+  transfer (a:=174) (p:=1039) (origin:=origin) (removed:=899912510) (by decide) v174 c175 rfl (by decide) (by decide) rfl
+
+private def ps176 : List ℕ := 1049::ps175
+
+set_option maxRecDepth 16000 in
+private theorem h176_32 : R 32 sa32 195213276=22051308 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=195213276) (start:=195213276) rfl rfl rfl (by decide +kernel)
+private theorem h176_64 : R 64 sa64 195213276=18931356 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=195213276) (start:=22051308) rfl rfl h176_32 (by decide +kernel)
+private theorem h176_96 : R 96 sa96 195213276=17555891 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=195213276) (start:=18931356) rfl rfl h176_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h176_128 : R 128 sa128 195213276=16675742 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=195213276) (start:=17555891) rfl rfl h176_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h176_160 : R 160 sa160 195213276=16010760 :=
+  continue_at (portion:=sc160) (base:=sa128) (rank:=160) (baseRank:=128) (t:=195213276) (start:=16675742) rfl rfl h176_128 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c176 : R 175 ps175 195213276=15748420 :=
+  continue_at (portion:=sc175) (base:=sa160) (rank:=175) (baseRank:=160) (t:=195213276) (start:=16010760) rfl rfl h176_160 (by decide +kernel)
+private theorem v176 : R 176 ps176 204778727327=origin-931578761 :=
+  transfer (a:=175) (p:=1049) (origin:=origin) (removed:=915830341) (by decide) v175 c176 rfl (by decide) (by decide) rfl
+
+private def ps177 : List ℕ := 1051::ps176
+
+set_option maxRecDepth 16000 in
+private theorem h177_32 : R 32 sa32 194841795=22009351 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=194841795) (start:=194841795) rfl rfl rfl (by decide +kernel)
+private theorem h177_64 : R 64 sa64 194841795=18895386 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=194841795) (start:=22009351) rfl rfl h177_32 (by decide +kernel)
+private theorem h177_96 : R 96 sa96 194841795=17522496 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=194841795) (start:=18895386) rfl rfl h177_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h177_128 : R 128 sa128 194841795=16643906 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=194841795) (start:=17522496) rfl rfl h177_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h177_160 : R 160 sa160 194841795=15980074 :=
+  continue_at (portion:=sc160) (base:=sa128) (rank:=160) (baseRank:=128) (t:=194841795) (start:=16643906) rfl rfl h177_128 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c177 : R 176 ps176 194841795=15701552 :=
+  continue_at (portion:=sc176) (base:=sa160) (rank:=176) (baseRank:=160) (t:=194841795) (start:=15980074) rfl rfl h177_160 (by decide +kernel)
+private theorem v177 : R 177 ps177 204778727327=origin-947280313 :=
+  transfer (a:=176) (p:=1051) (origin:=origin) (removed:=931578761) (by decide) v176 c177 rfl (by decide) (by decide) rfl
+
+private def ps178 : List ℕ := 1061::ps177
+
+set_option maxRecDepth 16000 in
+private theorem h178_32 : R 32 sa32 193005398=21801875 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=193005398) (start:=193005398) rfl rfl rfl (by decide +kernel)
+private theorem h178_64 : R 64 sa64 193005398=18717619 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=193005398) (start:=21801875) rfl rfl h178_32 (by decide +kernel)
+private theorem h178_96 : R 96 sa96 193005398=17357718 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=193005398) (start:=18717619) rfl rfl h178_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h178_128 : R 128 sa128 193005398=16486737 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=193005398) (start:=17357718) rfl rfl h178_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h178_160 : R 160 sa160 193005398=15828656 :=
+  continue_at (portion:=sc160) (base:=sa128) (rank:=160) (baseRank:=128) (t:=193005398) (start:=16486737) rfl rfl h178_128 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c178 : R 177 ps177 193005398=15536081 :=
+  continue_at (portion:=sc177) (base:=sa160) (rank:=177) (baseRank:=160) (t:=193005398) (start:=15828656) rfl rfl h178_160 (by decide +kernel)
+private theorem v178 : R 178 ps178 204778727327=origin-962816394 :=
+  transfer (a:=177) (p:=1061) (origin:=origin) (removed:=947280313) (by decide) v177 c178 rfl (by decide) (by decide) rfl
+
+private def ps179 : List ℕ := 1063::ps178
+
+set_option maxRecDepth 16000 in
+private theorem h179_32 : R 32 sa32 192642264=21760832 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=192642264) (start:=192642264) rfl rfl rfl (by decide +kernel)
+private theorem h179_64 : R 64 sa64 192642264=18682436 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=192642264) (start:=21760832) rfl rfl h179_32 (by decide +kernel)
+private theorem h179_96 : R 96 sa96 192642264=17325104 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=192642264) (start:=18682436) rfl rfl h179_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h179_128 : R 128 sa128 192642264=16455623 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=192642264) (start:=17325104) rfl rfl h179_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h179_160 : R 160 sa160 192642264=15798690 :=
+  continue_at (portion:=sc160) (base:=sa128) (rank:=160) (baseRank:=128) (t:=192642264) (start:=16455623) rfl rfl h179_128 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c179 : R 178 ps178 192642264=15490325 :=
+  continue_at (portion:=sc178) (base:=sa160) (rank:=178) (baseRank:=160) (t:=192642264) (start:=15798690) rfl rfl h179_160 (by decide +kernel)
+private theorem v179 : R 179 ps179 204778727327=origin-978306719 :=
+  transfer (a:=178) (p:=1063) (origin:=origin) (removed:=962816394) (by decide) v178 c179 rfl (by decide) (by decide) rfl
+
+private def ps180 : List ℕ := 1069::ps179
+
+set_option maxRecDepth 16000 in
+private theorem h180_32 : R 32 sa32 191561017=21638708 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=191561017) (start:=191561017) rfl rfl rfl (by decide +kernel)
+private theorem h180_64 : R 64 sa64 191561017=18577860 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=191561017) (start:=21638708) rfl rfl h180_32 (by decide +kernel)
+private theorem h180_96 : R 96 sa96 191561017=17228142 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=191561017) (start:=18577860) rfl rfl h180_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h180_128 : R 128 sa128 191561017=16363206 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=191561017) (start:=17228142) rfl rfl h180_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h180_160 : R 160 sa160 191561017=15709619 :=
+  continue_at (portion:=sc160) (base:=sa128) (rank:=160) (baseRank:=128) (t:=191561017) (start:=16363206) rfl rfl h180_128 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c180 : R 179 ps179 191561017=15386668 :=
+  continue_at (portion:=sc179) (base:=sa160) (rank:=179) (baseRank:=160) (t:=191561017) (start:=15709619) rfl rfl h180_160 (by decide +kernel)
+private theorem v180 : R 180 ps180 204778727327=origin-993693387 :=
+  transfer (a:=179) (p:=1069) (origin:=origin) (removed:=978306719) (by decide) v179 c180 rfl (by decide) (by decide) rfl
+
+private def ps181 : List ℕ := 1087::ps180
+
+set_option maxRecDepth 16000 in
+private theorem h181_32 : R 32 sa32 188388893=21280312 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=188388893) (start:=188388893) rfl rfl rfl (by decide +kernel)
+private theorem h181_64 : R 64 sa64 188388893=18270852 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=188388893) (start:=21280312) rfl rfl h181_32 (by decide +kernel)
+private theorem h181_96 : R 96 sa96 188388893=16943568 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=188388893) (start:=18270852) rfl rfl h181_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h181_128 : R 128 sa128 188388893=16091927 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=188388893) (start:=16943568) rfl rfl h181_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h181_160 : R 160 sa160 188388893=15448293 :=
+  continue_at (portion:=sc160) (base:=sa128) (rank:=160) (baseRank:=128) (t:=188388893) (start:=16091927) rfl rfl h181_128 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c181 : R 180 ps180 188388893=15114457 :=
+  continue_at (portion:=sc180) (base:=sa160) (rank:=180) (baseRank:=160) (t:=188388893) (start:=15448293) rfl rfl h181_160 (by decide +kernel)
+private theorem v181 : R 181 ps181 204778727327=origin-1008807844 :=
+  transfer (a:=180) (p:=1087) (origin:=origin) (removed:=993693387) (by decide) v180 c181 rfl (by decide) (by decide) rfl
+
+private def ps182 : List ℕ := 1091::ps181
+
+set_option maxRecDepth 16000 in
+private theorem h182_32 : R 32 sa32 187698191=21202307 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=187698191) (start:=187698191) rfl rfl rfl (by decide +kernel)
+private theorem h182_64 : R 64 sa64 187698191=18204050 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=187698191) (start:=21202307) rfl rfl h182_32 (by decide +kernel)
+private theorem h182_96 : R 96 sa96 187698191=16881644 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=187698191) (start:=18204050) rfl rfl h182_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h182_128 : R 128 sa128 187698191=16032851 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=187698191) (start:=16881644) rfl rfl h182_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h182_160 : R 160 sa160 187698191=15391350 :=
+  continue_at (portion:=sc160) (base:=sa128) (rank:=160) (baseRank:=128) (t:=187698191) (start:=16032851) rfl rfl h182_128 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c182 : R 181 ps181 187698191=15043116 :=
+  continue_at (portion:=sc181) (base:=sa160) (rank:=181) (baseRank:=160) (t:=187698191) (start:=15391350) rfl rfl h182_160 (by decide +kernel)
+private theorem v182 : R 182 ps182 204778727327=origin-1023850960 :=
+  transfer (a:=181) (p:=1091) (origin:=origin) (removed:=1008807844) (by decide) v181 c182 rfl (by decide) (by decide) rfl
+
+private def ps183 : List ℕ := 1093::ps182
+
+set_option maxRecDepth 16000 in
+private theorem h183_32 : R 32 sa32 187354736=21163504 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=187354736) (start:=187354736) rfl rfl rfl (by decide +kernel)
+private theorem h183_64 : R 64 sa64 187354736=18170811 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=187354736) (start:=21163504) rfl rfl h183_32 (by decide +kernel)
+private theorem h183_96 : R 96 sa96 187354736=16850788 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=187354736) (start:=18170811) rfl rfl h183_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h183_128 : R 128 sa128 187354736=16003443 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=187354736) (start:=16850788) rfl rfl h183_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h183_160 : R 160 sa160 187354736=15363025 :=
+  continue_at (portion:=sc160) (base:=sa128) (rank:=160) (baseRank:=128) (t:=187354736) (start:=16003443) rfl rfl h183_128 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c183 : R 182 ps182 187354736=14999931 :=
+  continue_at (portion:=sc182) (base:=sa160) (rank:=182) (baseRank:=160) (t:=187354736) (start:=15363025) rfl rfl h183_160 (by decide +kernel)
+private theorem v183 : R 183 ps183 204778727327=origin-1038850891 :=
+  transfer (a:=182) (p:=1093) (origin:=origin) (removed:=1023850960) (by decide) v182 c183 rfl (by decide) (by decide) rfl
+
+private def ps184 : List ℕ := 1097::ps183
+
+set_option maxRecDepth 16000 in
+private theorem h184_32 : R 32 sa32 186671583=21086346 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=186671583) (start:=186671583) rfl rfl rfl (by decide +kernel)
+private theorem h184_64 : R 64 sa64 186671583=18104688 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=186671583) (start:=21086346) rfl rfl h184_32 (by decide +kernel)
+private theorem h184_96 : R 96 sa96 186671583=16789499 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=186671583) (start:=18104688) rfl rfl h184_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h184_128 : R 128 sa128 186671583=15945015 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=186671583) (start:=16789499) rfl rfl h184_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h184_160 : R 160 sa160 186671583=15306743 :=
+  continue_at (portion:=sc160) (base:=sa128) (rank:=160) (baseRank:=128) (t:=186671583) (start:=15945015) rfl rfl h184_128 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c184 : R 183 ps183 186671583=14929483 :=
+  continue_at (portion:=sc183) (base:=sa160) (rank:=183) (baseRank:=160) (t:=186671583) (start:=15306743) rfl rfl h184_160 (by decide +kernel)
+private theorem v184 : R 184 ps184 204778727327=origin-1053780374 :=
+  transfer (a:=183) (p:=1097) (origin:=origin) (removed:=1038850891) (by decide) v183 c184 rfl (by decide) (by decide) rfl
+
+private def ps185 : List ℕ := 1103::ps184
+
+set_option maxRecDepth 16000 in
+private theorem h185_32 : R 32 sa32 185656144=20971615 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=185656144) (start:=185656144) rfl rfl rfl (by decide +kernel)
+private theorem h185_64 : R 64 sa64 185656144=18006353 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=185656144) (start:=20971615) rfl rfl h185_32 (by decide +kernel)
+private theorem h185_96 : R 96 sa96 185656144=16698324 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=185656144) (start:=18006353) rfl rfl h185_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h185_128 : R 128 sa128 185656144=15858131 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=185656144) (start:=16698324) rfl rfl h185_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h185_160 : R 160 sa160 185656144=15223033 :=
+  continue_at (portion:=sc160) (base:=sa128) (rank:=160) (baseRank:=128) (t:=185656144) (start:=15858131) rfl rfl h185_128 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c185 : R 184 ps184 185656144=14832399 :=
+  continue_at (portion:=sc184) (base:=sa160) (rank:=184) (baseRank:=160) (t:=185656144) (start:=15223033) rfl rfl h185_160 (by decide +kernel)
+private theorem v185 : R 185 ps185 204778727327=origin-1068612773 :=
+  transfer (a:=184) (p:=1103) (origin:=origin) (removed:=1053780374) (by decide) v184 c185 rfl (by decide) (by decide) rfl
+
+private def ps186 : List ℕ := 1109::ps185
+
+set_option maxRecDepth 16000 in
+private theorem h186_32 : R 32 sa32 184651692=20858129 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=184651692) (start:=184651692) rfl rfl rfl (by decide +kernel)
+private theorem h186_64 : R 64 sa64 184651692=17909144 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=184651692) (start:=20858129) rfl rfl h186_32 (by decide +kernel)
+private theorem h186_96 : R 96 sa96 184651692=16608147 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=184651692) (start:=17909144) rfl rfl h186_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h186_128 : R 128 sa128 184651692=15772127 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=184651692) (start:=16608147) rfl rfl h186_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h186_160 : R 160 sa160 184651692=15140176 :=
+  continue_at (portion:=sc160) (base:=sa128) (rank:=160) (baseRank:=128) (t:=184651692) (start:=15772127) rfl rfl h186_128 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c186 : R 185 ps185 184651692=14736411 :=
+  continue_at (portion:=sc185) (base:=sa160) (rank:=185) (baseRank:=160) (t:=184651692) (start:=15140176) rfl rfl h186_160 (by decide +kernel)
+private theorem v186 : R 186 ps186 204778727327=origin-1083349184 :=
+  transfer (a:=185) (p:=1109) (origin:=origin) (removed:=1068612773) (by decide) v185 c186 rfl (by decide) (by decide) rfl
+
+private def ps187 : List ℕ := 1117::ps186
+
+set_option maxRecDepth 16000 in
+private theorem h187_32 : R 32 sa32 183329209=20708680 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=183329209) (start:=183329209) rfl rfl rfl (by decide +kernel)
+private theorem h187_64 : R 64 sa64 183329209=17781112 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=183329209) (start:=20708680) rfl rfl h187_32 (by decide +kernel)
+private theorem h187_96 : R 96 sa96 183329209=16489420 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=183329209) (start:=17781112) rfl rfl h187_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h187_128 : R 128 sa128 183329209=15658897 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=183329209) (start:=16489420) rfl rfl h187_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h187_160 : R 160 sa160 183329209=15031120 :=
+  continue_at (portion:=sc160) (base:=sa128) (rank:=160) (baseRank:=128) (t:=183329209) (start:=15658897) rfl rfl h187_128 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c187 : R 186 ps186 183329209=14615057 :=
+  continue_at (portion:=sc186) (base:=sa160) (rank:=186) (baseRank:=160) (t:=183329209) (start:=15031120) rfl rfl h187_160 (by decide +kernel)
+private theorem v187 : R 187 ps187 204778727327=origin-1097964241 :=
+  transfer (a:=186) (p:=1117) (origin:=origin) (removed:=1083349184) (by decide) v186 c187 rfl (by decide) (by decide) rfl
+
+private def ps188 : List ℕ := 1123::ps187
+
+set_option maxRecDepth 16000 in
+private theorem h188_32 : R 32 sa32 182349712=20598034 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=182349712) (start:=182349712) rfl rfl rfl (by decide +kernel)
+private theorem h188_64 : R 64 sa64 182349712=17686391 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=182349712) (start:=20598034) rfl rfl h188_32 (by decide +kernel)
+private theorem h188_96 : R 96 sa96 182349712=16401581 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=182349712) (start:=17686391) rfl rfl h188_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h188_128 : R 128 sa128 182349712=15575224 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=182349712) (start:=16401581) rfl rfl h188_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h188_160 : R 160 sa160 182349712=14950537 :=
+  continue_at (portion:=sc160) (base:=sa128) (rank:=160) (baseRank:=128) (t:=182349712) (start:=15575224) rfl rfl h188_128 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c188 : R 187 ps187 182349712=14521750 :=
+  continue_at (portion:=sc187) (base:=sa160) (rank:=187) (baseRank:=160) (t:=182349712) (start:=14950537) rfl rfl h188_160 (by decide +kernel)
+private theorem v188 : R 188 ps188 204778727327=origin-1112485991 :=
+  transfer (a:=187) (p:=1123) (origin:=origin) (removed:=1097964241) (by decide) v187 c188 rfl (by decide) (by decide) rfl
+
+private def ps189 : List ℕ := 1129::ps188
+
+set_option maxRecDepth 16000 in
+private theorem h189_32 : R 32 sa32 181380626=20488569 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=181380626) (start:=181380626) rfl rfl rfl (by decide +kernel)
+private theorem h189_64 : R 64 sa64 181380626=17592578 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=181380626) (start:=20488569) rfl rfl h189_32 (by decide +kernel)
+private theorem h189_96 : R 96 sa96 181380626=16314667 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=181380626) (start:=17592578) rfl rfl h189_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h189_128 : R 128 sa128 181380626=15492320 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=181380626) (start:=16314667) rfl rfl h189_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h189_160 : R 160 sa160 181380626=14870685 :=
+  continue_at (portion:=sc160) (base:=sa128) (rank:=160) (baseRank:=128) (t:=181380626) (start:=15492320) rfl rfl h189_128 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c189 : R 188 ps188 181380626=14429408 :=
+  continue_at (portion:=sc188) (base:=sa160) (rank:=188) (baseRank:=160) (t:=181380626) (start:=14870685) rfl rfl h189_160 (by decide +kernel)
+private theorem v189 : R 189 ps189 204778727327=origin-1126915399 :=
+  transfer (a:=188) (p:=1129) (origin:=origin) (removed:=1112485991) (by decide) v188 c189 rfl (by decide) (by decide) rfl
+
+private def ps190 : List ℕ := 1151::ps189
+
+set_option maxRecDepth 16000 in
+private theorem h190_32 : R 32 sa32 177913750=20096882 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=177913750) (start:=177913750) rfl rfl rfl (by decide +kernel)
+private theorem h190_64 : R 64 sa64 177913750=17257029 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=177913750) (start:=20096882) rfl rfl h190_32 (by decide +kernel)
+private theorem h190_96 : R 96 sa96 177913750=16003452 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=177913750) (start:=17257029) rfl rfl h190_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h190_128 : R 128 sa128 177913750=15195686 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=177913750) (start:=16003452) rfl rfl h190_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h190_160 : R 160 sa160 177913750=14584954 :=
+  continue_at (portion:=sc160) (base:=sa128) (rank:=160) (baseRank:=128) (t:=177913750) (start:=15195686) rfl rfl h190_128 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c190 : R 189 ps189 177913750=14137125 :=
+  continue_at (portion:=sc189) (base:=sa160) (rank:=189) (baseRank:=160) (t:=177913750) (start:=14584954) rfl rfl h190_160 (by decide +kernel)
+private theorem v190 : R 190 ps190 204778727327=origin-1141052524 :=
+  transfer (a:=189) (p:=1151) (origin:=origin) (removed:=1126915399) (by decide) v189 c190 rfl (by decide) (by decide) rfl
+
+private def ps191 : List ℕ := 1153::ps190
+
+set_option maxRecDepth 16000 in
+private theorem h191_32 : R 32 sa32 177605140=20062018 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=177605140) (start:=177605140) rfl rfl rfl (by decide +kernel)
+private theorem h191_64 : R 64 sa64 177605140=17227128 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=177605140) (start:=20062018) rfl rfl h191_32 (by decide +kernel)
+private theorem h191_96 : R 96 sa96 177605140=15975724 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=177605140) (start:=17227128) rfl rfl h191_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h191_128 : R 128 sa128 177605140=15169280 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=177605140) (start:=15975724) rfl rfl h191_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h191_160 : R 160 sa160 177605140=14559543 :=
+  continue_at (portion:=sc160) (base:=sa128) (rank:=160) (baseRank:=128) (t:=177605140) (start:=15169280) rfl rfl h191_128 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c191 : R 190 ps190 177605140=14098379 :=
+  continue_at (portion:=sc190) (base:=sa160) (rank:=190) (baseRank:=160) (t:=177605140) (start:=14559543) rfl rfl h191_160 (by decide +kernel)
+private theorem v191 : R 191 ps191 204778727327=origin-1155150903 :=
+  transfer (a:=190) (p:=1153) (origin:=origin) (removed:=1141052524) (by decide) v190 c191 rfl (by decide) (by decide) rfl
+
+private def ps192 : List ℕ := 1163::ps191
+
+set_option maxRecDepth 16000 in
+private theorem h192_32 : R 32 sa32 176078011=19889503 :=
+  continue_at (portion:=sc32) (base:=sa0) (rank:=32) (baseRank:=0) (t:=176078011) (start:=176078011) rfl rfl rfl (by decide +kernel)
+private theorem h192_64 : R 64 sa64 176078011=17079324 :=
+  continue_at (portion:=sc64) (base:=sa32) (rank:=64) (baseRank:=32) (t:=176078011) (start:=19889503) rfl rfl h192_32 (by decide +kernel)
+private theorem h192_96 : R 96 sa96 176078011=15838650 :=
+  continue_at (portion:=sc96) (base:=sa64) (rank:=96) (baseRank:=64) (t:=176078011) (start:=17079324) rfl rfl h192_64 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h192_128 : R 128 sa128 176078011=15038556 :=
+  continue_at (portion:=sc128) (base:=sa96) (rank:=128) (baseRank:=96) (t:=176078011) (start:=15838650) rfl rfl h192_96 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem h192_160 : R 160 sa160 176078011=14433592 :=
+  continue_at (portion:=sc160) (base:=sa128) (rank:=160) (baseRank:=128) (t:=176078011) (start:=15038556) rfl rfl h192_128 (by decide +kernel)
+set_option maxRecDepth 14000 in
+private theorem c192 : R 191 ps191 176078011=13962127 :=
+  continue_at (portion:=sc191) (base:=sa160) (rank:=191) (baseRank:=160) (t:=176078011) (start:=14433592) rfl rfl h192_160 (by decide +kernel)
+private theorem v192 : R 192 ps192 204778727327=origin-1169113030 :=
+  transfer (a:=191) (p:=1163) (origin:=origin) (removed:=1155150903) (by decide) v191 c192 rfl (by decide) (by decide) rfl
+
+private theorem filter_from_test {bound : ℕ} (test : ℕ → Bool)
+    (ok : ∀ n, n≤bound → (test n=true ↔ n.Prime)) (y : ℕ) (hy : y≤bound) :
+    (List.range (y+1)).filter (fun n => decide n.Prime) =
+      (List.range (y+1)).filter test := by
+  apply List.filter_congr
+  intro n member
+  have nbound : n≤bound := by have := List.mem_range.mp member; omega
+  by_cases hp : n.Prime
+  · simp [hp,(ok n nbound).mpr hp]
+  · have miss : test n=false := Bool.eq_false_iff.mpr (mt (ok n nbound).mp hp)
+    simp [hp,miss]
+
+
+
+private def r0_90 : List ℕ := [2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71,73,79,83,89]
+private theorem r0_90ok : (List.range' 0 90).filter prime = r0_90 :=
+  by decide +kernel
+
+private def r90_180 : List ℕ := [97,101,103,107,109,113,127,131,137,139,149,151,157,163,167,173,179]
+private theorem r90_180ok : (List.range' 90 90).filter prime = r90_180 :=
+  by decide +kernel
+
+private def r0_180 : List ℕ := r0_90 ++ r90_180
+private theorem r0_180ok : (List.range' 0 180).filter prime = r0_180 :=
+  merge_filter _ 0 90 90 _ _ r0_90ok r90_180ok
+
+private def r180_270 : List ℕ := [181,191,193,197,199,211,223,227,229,233,239,241,251,257,263,269]
+private theorem r180_270ok : (List.range' 180 90).filter prime = r180_270 :=
+  by decide +kernel
+
+private def r270_360 : List ℕ := [271,277,281,283,293,307,311,313,317,331,337,347,349,353,359]
+private theorem r270_360ok : (List.range' 270 90).filter prime = r270_360 :=
+  by decide +kernel
+
+private def r180_360 : List ℕ := r180_270 ++ r270_360
+private theorem r180_360ok : (List.range' 180 180).filter prime = r180_360 :=
+  merge_filter _ 180 90 90 _ _ r180_270ok r270_360ok
+
+private def r0_360 : List ℕ := r0_180 ++ r180_360
+private theorem r0_360ok : (List.range' 0 360).filter prime = r0_360 :=
+  merge_filter _ 0 180 180 _ _ r0_180ok r180_360ok
+
+private def r360_450 : List ℕ := [367,373,379,383,389,397,401,409,419,421,431,433,439,443,449]
+private theorem r360_450ok : (List.range' 360 90).filter prime = r360_450 :=
+  by decide +kernel
+
+private def r450_540 : List ℕ := [457,461,463,467,479,487,491,499,503,509,521,523]
+private theorem r450_540ok : (List.range' 450 90).filter prime = r450_540 :=
+  by decide +kernel
+
+private def r360_540 : List ℕ := r360_450 ++ r450_540
+private theorem r360_540ok : (List.range' 360 180).filter prime = r360_540 :=
+  merge_filter _ 360 90 90 _ _ r360_450ok r450_540ok
+
+private def r540_630 : List ℕ := [541,547,557,563,569,571,577,587,593,599,601,607,613,617,619]
+private theorem r540_630ok : (List.range' 540 90).filter prime = r540_630 :=
+  by decide +kernel
+
+private def r630_720 : List ℕ := [631,641,643,647,653,659,661,673,677,683,691,701,709,719]
+private theorem r630_720ok : (List.range' 630 90).filter prime = r630_720 :=
+  by decide +kernel
+
+private def r540_720 : List ℕ := r540_630 ++ r630_720
+private theorem r540_720ok : (List.range' 540 180).filter prime = r540_720 :=
+  merge_filter _ 540 90 90 _ _ r540_630ok r630_720ok
+
+private def r360_720 : List ℕ := r360_540 ++ r540_720
+private theorem r360_720ok : (List.range' 360 360).filter prime = r360_720 :=
+  merge_filter _ 360 180 180 _ _ r360_540ok r540_720ok
+
+private def r0_720 : List ℕ := r0_360 ++ r360_720
+private theorem r0_720ok : (List.range' 0 720).filter prime = r0_720 :=
+  merge_filter _ 0 360 360 _ _ r0_360ok r360_720ok
+
+set_option maxRecDepth 20000 in
+private theorem row128 :
+    ((List.range (719+1)).filter (fun p => decide p.Prime)).reverse = ps128 := by
+  rw [filter_from_test prime prime_ok 719 (by decide),List.range_eq_range',r0_720ok]
+  rfl
+
+private def r0_72 : List ℕ := [2,3,5,7,11,13,17,19,23,29,31,37,41,43,47,53,59,61,67,71]
+private theorem r0_72ok : (List.range' 0 72).filter prime = r0_72 :=
+  by decide +kernel
+
+private def r72_145 : List ℕ := [73,79,83,89,97,101,103,107,109,113,127,131,137,139]
+private theorem r72_145ok : (List.range' 72 73).filter prime = r72_145 :=
+  by decide +kernel
+
+private def r0_145 : List ℕ := r0_72 ++ r72_145
+private theorem r0_145ok : (List.range' 0 145).filter prime = r0_145 :=
+  merge_filter _ 0 72 73 _ _ r0_72ok r72_145ok
+
+private def r145_218 : List ℕ := [149,151,157,163,167,173,179,181,191,193,197,199,211]
+private theorem r145_218ok : (List.range' 145 73).filter prime = r145_218 :=
+  by decide +kernel
+
+private def r218_291 : List ℕ := [223,227,229,233,239,241,251,257,263,269,271,277,281,283]
+private theorem r218_291ok : (List.range' 218 73).filter prime = r218_291 :=
+  by decide +kernel
+
+private def r145_291 : List ℕ := r145_218 ++ r218_291
+private theorem r145_291ok : (List.range' 145 146).filter prime = r145_291 :=
+  merge_filter _ 145 73 73 _ _ r145_218ok r218_291ok
+
+private def r0_291 : List ℕ := r0_145 ++ r145_291
+private theorem r0_291ok : (List.range' 0 291).filter prime = r0_291 :=
+  merge_filter _ 0 145 146 _ _ r0_145ok r145_291ok
+
+private def r291_363 : List ℕ := [293,307,311,313,317,331,337,347,349,353,359]
+private theorem r291_363ok : (List.range' 291 72).filter prime = r291_363 :=
+  by decide +kernel
+
+private def r363_436 : List ℕ := [367,373,379,383,389,397,401,409,419,421,431,433]
+private theorem r363_436ok : (List.range' 363 73).filter prime = r363_436 :=
+  by decide +kernel
+
+private def r291_436 : List ℕ := r291_363 ++ r363_436
+private theorem r291_436ok : (List.range' 291 145).filter prime = r291_436 :=
+  merge_filter _ 291 72 73 _ _ r291_363ok r363_436ok
+
+private def r436_509 : List ℕ := [439,443,449,457,461,463,467,479,487,491,499,503]
+private theorem r436_509ok : (List.range' 436 73).filter prime = r436_509 :=
+  by decide +kernel
+
+private def r509_582 : List ℕ := [509,521,523,541,547,557,563,569,571,577]
+private theorem r509_582ok : (List.range' 509 73).filter prime = r509_582 :=
+  by decide +kernel
+
+private def r436_582 : List ℕ := r436_509 ++ r509_582
+private theorem r436_582ok : (List.range' 436 146).filter prime = r436_582 :=
+  merge_filter _ 436 73 73 _ _ r436_509ok r509_582ok
+
+private def r291_582 : List ℕ := r291_436 ++ r436_582
+private theorem r291_582ok : (List.range' 291 291).filter prime = r291_582 :=
+  merge_filter _ 291 145 146 _ _ r291_436ok r436_582ok
+
+private def r0_582 : List ℕ := r0_291 ++ r291_582
+private theorem r0_582ok : (List.range' 0 582).filter prime = r0_582 :=
+  merge_filter _ 0 291 291 _ _ r0_291ok r291_582ok
+
+private def r582_654 : List ℕ := [587,593,599,601,607,613,617,619,631,641,643,647,653]
+private theorem r582_654ok : (List.range' 582 72).filter prime = r582_654 :=
+  by decide +kernel
+
+private def r654_727 : List ℕ := [659,661,673,677,683,691,701,709,719]
+private theorem r654_727ok : (List.range' 654 73).filter prime = r654_727 :=
+  by decide +kernel
+
+private def r582_727 : List ℕ := r582_654 ++ r654_727
+private theorem r582_727ok : (List.range' 582 145).filter prime = r582_727 :=
+  merge_filter _ 582 72 73 _ _ r582_654ok r654_727ok
+
+private def r727_800 : List ℕ := [727,733,739,743,751,757,761,769,773,787,797]
+private theorem r727_800ok : (List.range' 727 73).filter prime = r727_800 :=
+  by decide +kernel
+
+private def r800_873 : List ℕ := [809,811,821,823,827,829,839,853,857,859,863]
+private theorem r800_873ok : (List.range' 800 73).filter prime = r800_873 :=
+  by decide +kernel
+
+private def r727_873 : List ℕ := r727_800 ++ r800_873
+private theorem r727_873ok : (List.range' 727 146).filter prime = r727_873 :=
+  merge_filter _ 727 73 73 _ _ r727_800ok r800_873ok
+
+private def r582_873 : List ℕ := r582_727 ++ r727_873
+private theorem r582_873ok : (List.range' 582 291).filter prime = r582_873 :=
+  merge_filter _ 582 145 146 _ _ r582_727ok r727_873ok
+
+private def r873_945 : List ℕ := [877,881,883,887,907,911,919,929,937,941]
+private theorem r873_945ok : (List.range' 873 72).filter prime = r873_945 :=
+  by decide +kernel
+
+private def r945_1018 : List ℕ := [947,953,967,971,977,983,991,997,1009,1013]
+private theorem r945_1018ok : (List.range' 945 73).filter prime = r945_1018 :=
+  by decide +kernel
+
+private def r873_1018 : List ℕ := r873_945 ++ r945_1018
+private theorem r873_1018ok : (List.range' 873 145).filter prime = r873_1018 :=
+  merge_filter _ 873 72 73 _ _ r873_945ok r945_1018ok
+
+private def r1018_1091 : List ℕ := [1019,1021,1031,1033,1039,1049,1051,1061,1063,1069,1087]
+private theorem r1018_1091ok : (List.range' 1018 73).filter prime = r1018_1091 :=
+  by decide +kernel
+
+private def r1091_1164 : List ℕ := [1091,1093,1097,1103,1109,1117,1123,1129,1151,1153,1163]
+private theorem r1091_1164ok : (List.range' 1091 73).filter prime = r1091_1164 :=
+  by decide +kernel
+
+private def r1018_1164 : List ℕ := r1018_1091 ++ r1091_1164
+private theorem r1018_1164ok : (List.range' 1018 146).filter prime = r1018_1164 :=
+  merge_filter _ 1018 73 73 _ _ r1018_1091ok r1091_1164ok
+
+private def r873_1164 : List ℕ := r873_1018 ++ r1018_1164
+private theorem r873_1164ok : (List.range' 873 291).filter prime = r873_1164 :=
+  merge_filter _ 873 145 146 _ _ r873_1018ok r1018_1164ok
+
+private def r582_1164 : List ℕ := r582_873 ++ r873_1164
+private theorem r582_1164ok : (List.range' 582 582).filter prime = r582_1164 :=
+  merge_filter _ 582 291 291 _ _ r582_873ok r873_1164ok
+
+private def r0_1164 : List ℕ := r0_582 ++ r582_1164
+private theorem r0_1164ok : (List.range' 0 1164).filter prime = r0_1164 :=
+  merge_filter _ 0 582 582 _ _ r0_582ok r582_1164ok
+
+set_option maxRecDepth 20000 in
+private theorem row192 :
+    ((List.range (1163+1)).filter (fun p => decide p.Prime)).reverse = ps192 := by
+  rw [filter_from_test prime prime_ok 1163 (by decide),List.range_eq_range',r0_1164ok]
+  rfl
+
+private theorem bridge {k a : ℕ} {ps : List ℕ} (kb : k≤745089) (row :
+    ((List.range (k+1)).filter (fun p => decide p.Prime)).reverse = ps) (val : tab k=a) :
+    ((Icc 1 204778727327).filter (fun n => ∀ p ∈ Nat.primesLE k, ¬ p ∣ n)).card = R a ps 204778727327 := by
+  have grade : Nat.primeCounting k=a := (FastDenseA26.fast_correct k kb).symm.trans val
+  calc
+    _ = (((List.range (k+1)).filter (fun p => decide p.Prime)).reverse.foldr advance id) 204778727327 :=
+      (legendre_range k 204778727327).symm
+    _ = evalPhi tab ((List.range (k+1)).filter (fun p => decide p.Prime)).reverse 204778727327 :=
+      agree_range tab FastDenseA26.fast_correct k (by decide) 204778727327
+    _ = R (Nat.primeCounting k) ((List.range (k+1)).filter (fun p => decide p.Prime)).reverse 204778727327 :=
+      ranked_range tab FastDenseA26.fast_correct k kb 204778727327
+    _ = _ := by rw [grade,row]
+
+set_option maxRecDepth 18000 in
+theorem exact_change : ((Icc 1 204778727327).filter (fun n => ∀ p ∈ Nat.primesLE 1163, ¬ p ∣ n)).card = ((Icc 1 204778727327).filter (fun n => ∀ p ∈ Nat.primesLE 719, ¬ p ∣ n)).card - 1169113030 := by
+  have l : ((Icc 1 204778727327).filter (fun n => ∀ p ∈ Nat.primesLE 719, ¬ p ∣ n)).card=R 128 ps128 204778727327 := bridge (by decide) row128 (by decide +kernel)
+  have r : ((Icc 1 204778727327).filter (fun n => ∀ p ∈ Nat.primesLE 1163, ¬ p ∣ n)).card=R 192 ps192 204778727327 := bridge (by decide) row192 (by decide +kernel)
+  exact r.trans ((v192).trans (congrArg (fun n : ℕ => n-1169113030) l.symm))
+
+end IndexedSlicedW17SieveA25From128To192
