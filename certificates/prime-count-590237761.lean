@@ -1761,9 +1761,9 @@ theorem fast_correct (n : ℕ) (bound : n ≤ 707280) : fast n = Nat.primeCounti
 end WheelTableA590
 
 
-/- The Legendre and Meissel identities below are the public Physbuzz reduction
-for OEIS A247824, itself crediting Daniel Veljjanoski and rleshner. The new
-certificate evaluates the first of the eight residual rank anchors. -/
+/- The Legendre and Meissel identities come from Physbuzz's reduction for
+OEIS A247824, which credits Daniel Veljjanoski and rleshner. The calculation
+below gives the prime count at the second of the eight endpoints. -/
 open Finset
 namespace RankWheel590
 
