@@ -1,0 +1,277 @@
+import certificates.«pp-incidence-rows-core»
+
+/-! All placements for free 8-cell tile indices 270, 271, 278, 279. -/
+
+open OMA.S_oeis_a380455 PrimePolyFactor HalfCatalogue HalfGeometry HalfIncidence
+
+namespace HalfIndexRows
+
+private def cache8x270 : Orientation → ℤ × ℕ
+  | ⟨false,false,false⟩ => (0,0x2000000020000000f00000005)
+  | ⟨false,false,true⟩ => (-95,0x2800000078000000100000001)
+  | ⟨false,true,false⟩ => (-2,0x2000000020000000780000005)
+  | ⟨false,true,true⟩ => (-97,0x280000003c000000100000001)
+  | ⟨true,false,false⟩ => (0,0x2000000030000000e00000003)
+  | ⟨true,false,true⟩ => (-95,0x1800000070000000180000001)
+  | ⟨true,true,false⟩ => (-1,0x10000000300000001c0000003)
+  | ⟨true,true,true⟩ => (-97,0x300000001c000000300000001)
+
+set_option maxRecDepth 20000 in
+private theorem view8x270 (g : Orientation) : cache8x270 g=views (shape 8 270) g := by
+  obtain ⟨a,b,c⟩:=g
+  cases a <;> cases b <;> cases c <;> decide +kernel
+
+set_option maxRecDepth 24000 in
+set_option maxHeartbeats 2400000 in
+private theorem part8x270x0 : RowFact 8 270 ⟨false,false,false⟩ :=
+  checked_row (mask:=0x2800000054000000c2000001020000010100000081000000860000005400000028000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000) view8x270 (by decide +kernel) (by decide +kernel)
+
+set_option maxRecDepth 24000 in
+set_option maxHeartbeats 2400000 in
+private theorem part8x270x1 : RowFact 8 270 ⟨false,false,true⟩ :=
+  checked_row (mask:=0x10000000280000006c00000082000000820000010100000101000000aa00000054000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000) view8x270 (by decide +kernel) (by decide +kernel)
+
+set_option maxRecDepth 24000 in
+set_option maxHeartbeats 2400000 in
+private theorem part8x270x2 : RowFact 8 270 ⟨false,true,false⟩ :=
+  checked_row (mask:=0xa000000150000002100000040800000808000004080000021000000150000000a0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000) view8x270 (by decide +kernel) (by decide +kernel)
+
+set_option maxRecDepth 24000 in
+set_option maxHeartbeats 2400000 in
+private theorem part8x270x3 : RowFact 8 270 ⟨false,true,true⟩ :=
+  checked_row (mask:=0x40000000a0000001a000000210000006100000080800000408000002a800000150000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000) view8x270 (by decide +kernel) (by decide +kernel)
+
+set_option maxRecDepth 24000 in
+set_option maxHeartbeats 2400000 in
+private theorem part8x270x4 : RowFact 8 270 ⟨true,false,false⟩ :=
+  checked_row (mask:=0x300000004c000000c2000001020000008100000101000000860000005400000028000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000) view8x270 (by decide +kernel) (by decide +kernel)
+
+set_option maxRecDepth 24000 in
+set_option maxHeartbeats 2400000 in
+private theorem part8x270x5 : RowFact 8 270 ⟨true,false,true⟩ :=
+  checked_row (mask:=0x10000000280000004c000000820000010200000081000001010000008600000078000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000) view8x270 (by decide +kernel) (by decide +kernel)
+
+set_option maxRecDepth 24000 in
+set_option maxHeartbeats 2400000 in
+private theorem part8x270x6 : RowFact 8 270 ⟨true,true,false⟩ :=
+  checked_row (mask:=0x6000000190000002100000060800000808000004080000020800000150000000a0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000) view8x270 (by decide +kernel) (by decide +kernel)
+
+set_option maxRecDepth 24000 in
+set_option maxHeartbeats 2400000 in
+private theorem part8x270x7 : RowFact 8 270 ⟨true,true,true⟩ :=
+  checked_row (mask:=0x40000000a0000001900000021000000608000008080000040800000308000000f0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000) view8x270 (by decide +kernel) (by decide +kernel)
+
+theorem checked8x270 (g : Orientation) : RowFact 8 270 g := by
+  obtain ⟨a,b,c⟩:=g
+  cases a <;> cases b <;> cases c
+  · exact part8x270x0
+  · exact part8x270x1
+  · exact part8x270x2
+  · exact part8x270x3
+  · exact part8x270x4
+  · exact part8x270x5
+  · exact part8x270x6
+  · exact part8x270x7
+
+private def cache8x271 : Orientation → ℤ × ℕ
+  | ⟨false,false,false⟩ => (0,0x2000000060000000f00000001)
+  | ⟨false,false,true⟩ => (-95,0x800000078000000300000001)
+  | ⟨false,true,false⟩ => (0,0x80000000c0000001e0000001)
+  | ⟨false,true,true⟩ => (-97,0x200000003c000000180000001)
+  | ⟨true,false,false⟩ => (0,0x2000000060000000e00000003)
+  | ⟨true,false,true⟩ => (-95,0x1800000070000000300000001)
+  | ⟨true,true,false⟩ => (-1,0x10000000180000001c0000003)
+  | ⟨true,true,true⟩ => (-97,0x300000001c000000180000001)
+
+set_option maxRecDepth 20000 in
+private theorem view8x271 (g : Orientation) : cache8x271 g=views (shape 8 271) g := by
+  obtain ⟨a,b,c⟩:=g
+  cases a <;> cases b <;> cases c <;> decide +kernel
+
+set_option maxRecDepth 24000 in
+set_option maxHeartbeats 2400000 in
+private theorem part8x271x0 : RowFact 8 271 ⟨false,false,false⟩ :=
+  checked_row (mask:=0x200000005c00000082000001020000010100000081000000820000007400000008000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000) view8x271 (by decide +kernel) (by decide +kernel)
+
+set_option maxRecDepth 24000 in
+set_option maxHeartbeats 2400000 in
+private theorem part8x271x1 : RowFact 8 271 ⟨false,false,true⟩ :=
+  checked_row (mask:=0x10000000280000004400000082000000820000010100000101000000ee00000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000) view8x271 (by decide +kernel) (by decide +kernel)
+
+set_option maxRecDepth 24000 in
+set_option maxHeartbeats 2400000 in
+private theorem part8x271x2 : RowFact 8 271 ⟨false,true,false⟩ :=
+  checked_row (mask:=0x20000001d00000021000000408000008080000040800000210000001d000000020000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000) view8x271 (by decide +kernel) (by decide +kernel)
+
+set_option maxRecDepth 24000 in
+set_option maxHeartbeats 2400000 in
+private theorem part8x271x3 : RowFact 8 271 ⟨false,true,true⟩ :=
+  checked_row (mask:=0x40000000a00000012000000210000004100000080800000708000000e800000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000) view8x271 (by decide +kernel) (by decide +kernel)
+
+set_option maxRecDepth 24000 in
+set_option maxHeartbeats 2400000 in
+private theorem part8x271x4 : RowFact 8 271 ⟨true,false,false⟩ :=
+  checked_row (mask:=0x300000004c00000082000001020000008100000081000000820000007400000008000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000) view8x271 (by decide +kernel) (by decide +kernel)
+
+set_option maxRecDepth 24000 in
+set_option maxHeartbeats 2400000 in
+private theorem part8x271x5 : RowFact 8 271 ⟨true,false,true⟩ :=
+  checked_row (mask:=0x10000000280000004400000082000000820000008100000101000000e600000018000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000) view8x271 (by decide +kernel) (by decide +kernel)
+
+set_option maxRecDepth 24000 in
+set_option maxHeartbeats 2400000 in
+private theorem part8x271x6 : RowFact 8 271 ⟨true,true,false⟩ :=
+  checked_row (mask:=0x60000001900000021000000408000008080000041000000210000001d000000020000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000) view8x271 (by decide +kernel) (by decide +kernel)
+
+set_option maxRecDepth 24000 in
+set_option maxHeartbeats 2400000 in
+private theorem part8x271x7 : RowFact 8 271 ⟨true,true,true⟩ :=
+  checked_row (mask:=0x40000000a00000012000000210000004100000081000000608000001c800000030000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000) view8x271 (by decide +kernel) (by decide +kernel)
+
+theorem checked8x271 (g : Orientation) : RowFact 8 271 g := by
+  obtain ⟨a,b,c⟩:=g
+  cases a <;> cases b <;> cases c
+  · exact part8x271x0
+  · exact part8x271x1
+  · exact part8x271x2
+  · exact part8x271x3
+  · exact part8x271x4
+  · exact part8x271x5
+  · exact part8x271x6
+  · exact part8x271x7
+
+private def cache8x278 : Orientation → ℤ × ℕ
+  | ⟨false,false,false⟩ => (0,0x20000000e0000000b00000001)
+  | ⟨false,false,true⟩ => (-95,0x800000058000000700000001)
+  | ⟨false,true,false⟩ => (0,0x80000000e0000001a0000001)
+  | ⟨false,true,true⟩ => (-97,0x20000000340000001c0000001)
+  | ⟨true,false,false⟩ => (0,0x6000000040000000e00000003)
+  | ⟨true,false,true⟩ => (-95,0x1800000070000000200000003)
+  | ⟨true,true,false⟩ => (-1,0x18000000080000001c0000003)
+  | ⟨true,true,true⟩ => (-98,0x6000000038000000100000003)
+
+set_option maxRecDepth 20000 in
+private theorem view8x278 (g : Orientation) : cache8x278 g=views (shape 8 278) g := by
+  obtain ⟨a,b,c⟩:=g
+  cases a <;> cases b <;> cases c <;> decide +kernel
+
+set_option maxRecDepth 24000 in
+set_option maxHeartbeats 2400000 in
+private theorem part8x278x0 : RowFact 8 278 ⟨false,false,false⟩ :=
+  checked_row (mask:=0x20000000d40000010a000001020000010100000081000000a10000005600000008000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000) view8x278 (by decide +kernel) (by decide +kernel)
+
+set_option maxRecDepth 24000 in
+set_option maxHeartbeats 2400000 in
+private theorem part8x278x1 : RowFact 8 278 ⟨false,false,true⟩ :=
+  checked_row (mask:=0x100000006c0000008200000082000001010000010100000145000000aa00000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000) view8x278 (by decide +kernel) (by decide +kernel)
+
+set_option maxRecDepth 24000 in
+set_option maxHeartbeats 2400000 in
+private theorem part8x278x2 : RowFact 8 278 ⟨false,true,false⟩ :=
+  checked_row (mask:=0x20000001d00000061000000808000008080000080800000610000001d000000020000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000) view8x278 (by decide +kernel) (by decide +kernel)
+
+set_option maxRecDepth 24000 in
+set_option maxHeartbeats 2400000 in
+private theorem part8x278x3 : RowFact 8 278 ⟨false,true,true⟩ :=
+  checked_row (mask:=0x40000001a000000620000008100000081000000a0800000548000000a800000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000) view8x278 (by decide +kernel) (by decide +kernel)
+
+set_option maxRecDepth 24000 in
+set_option maxHeartbeats 2400000 in
+private theorem part8x278x4 : RowFact 8 278 ⟨true,false,false⟩ :=
+  checked_row (mask:=0x30000000cc0000010200000102000000810000008100000082000000720000000c000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000) view8x278 (by decide +kernel) (by decide +kernel)
+
+set_option maxRecDepth 24000 in
+set_option maxHeartbeats 2400000 in
+private theorem part8x278x5 : RowFact 8 278 ⟨true,false,true⟩ :=
+  checked_row (mask:=0x18000000640000008400000082000000820000010100000101000000e600000018000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000) view8x278 (by decide +kernel) (by decide +kernel)
+
+set_option maxRecDepth 24000 in
+set_option maxHeartbeats 2400000 in
+private theorem part8x278x6 : RowFact 8 278 ⟨true,true,false⟩ :=
+  checked_row (mask:=0x600000019000000610000008080000080800000410000004100000039000000060000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000) view8x278 (by decide +kernel) (by decide +kernel)
+
+set_option maxRecDepth 24000 in
+set_option maxHeartbeats 2400000 in
+private theorem part8x278x7 : RowFact 8 278 ⟨true,true,true⟩ :=
+  checked_row (mask:=0xc0000003200000042000000410000008100000081000000608000001c800000030000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000) view8x278 (by decide +kernel) (by decide +kernel)
+
+theorem checked8x278 (g : Orientation) : RowFact 8 278 g := by
+  obtain ⟨a,b,c⟩:=g
+  cases a <;> cases b <;> cases c
+  · exact part8x278x0
+  · exact part8x278x1
+  · exact part8x278x2
+  · exact part8x278x3
+  · exact part8x278x4
+  · exact part8x278x5
+  · exact part8x278x6
+  · exact part8x278x7
+
+private def cache8x279 : Orientation → ℤ × ℕ
+  | ⟨false,false,false⟩ => (0,0xa0000000e0000000300000001)
+  | ⟨false,false,true⟩ => (-95,0x800000018000000700000005)
+  | ⟨false,true,false⟩ => (0,0xa0000000e000000180000001)
+  | ⟨false,true,true⟩ => (-99,0x80000000c0000000700000005)
+  | ⟨true,false,false⟩ => (0,0xc000000040000000e00000003)
+  | ⟨true,false,true⟩ => (-94,0xc00000038000000100000003)
+  | ⟨true,true,false⟩ => (-1,0xc000000080000001c0000003)
+  | ⟨true,true,true⟩ => (-99,0xc000000070000000200000003)
+
+set_option maxRecDepth 20000 in
+private theorem view8x279 (g : Orientation) : cache8x279 g=views (shape 8 279) g := by
+  obtain ⟨a,b,c⟩:=g
+  cases a <;> cases b <;> cases c <;> decide +kernel
+
+set_option maxRecDepth 24000 in
+set_option maxHeartbeats 2400000 in
+private theorem part8x279x0 : RowFact 8 279 ⟨false,false,false⟩ :=
+  checked_row (mask:=0xa0000001500000010c00000102000000820000008100000061000000150000000a000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000) view8x279 (by decide +kernel) (by decide +kernel)
+
+set_option maxRecDepth 24000 in
+set_option maxHeartbeats 2400000 in
+private theorem part8x279x1 : RowFact 8 279 ⟨false,false,true⟩ :=
+  checked_row (mask:=0x54000000aa00000082000001010000010100000101000000c60000002800000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000) view8x279 (by decide +kernel) (by decide +kernel)
+
+set_option maxRecDepth 24000 in
+set_option maxHeartbeats 2400000 in
+private theorem part8x279x2 : RowFact 8 279 ⟨false,true,false⟩ :=
+  checked_row (mask:=0xa000000150000006100000080800000808000008080000061000000150000000a0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000) view8x279 (by decide +kernel) (by decide +kernel)
+
+set_option maxRecDepth 24000 in
+set_option maxHeartbeats 2400000 in
+private theorem part8x279x3 : RowFact 8 279 ⟨false,true,true⟩ :=
+  checked_row (mask:=0x54000000aa000000820000008100000061000000108000000c80000002800000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000) view8x279 (by decide +kernel) (by decide +kernel)
+
+set_option maxRecDepth 24000 in
+set_option maxHeartbeats 2400000 in
+private theorem part8x279x4 : RowFact 8 279 ⟨true,false,false⟩ :=
+  checked_row (mask:=0xf00000010c00000102000000820000004100000041000000310000000900000006000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000) view8x279 (by decide +kernel) (by decide +kernel)
+
+set_option maxRecDepth 24000 in
+set_option maxHeartbeats 2400000 in
+private theorem part8x279x5 : RowFact 8 279 ⟨true,false,true⟩ :=
+  checked_row (mask:=0x3c0000004200000042000000810000010100000101000000c10000002600000018000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000) view8x279 (by decide +kernel) (by decide +kernel)
+
+set_option maxRecDepth 24000 in
+set_option maxHeartbeats 2400000 in
+private theorem part8x279x6 : RowFact 8 279 ⟨true,true,false⟩ :=
+  checked_row (mask:=0x1e000000610000008100000080800000808000008100000062000000120000000c0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000) view8x279 (by decide +kernel) (by decide +kernel)
+
+set_option maxRecDepth 24000 in
+set_option maxHeartbeats 2400000 in
+private theorem part8x279x7 : RowFact 8 279 ⟨true,true,true⟩ :=
+  checked_row (mask:=0x780000008400000084000000820000008100000061000000108000000c800000030000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000) view8x279 (by decide +kernel) (by decide +kernel)
+
+theorem checked8x279 (g : Orientation) : RowFact 8 279 g := by
+  obtain ⟨a,b,c⟩:=g
+  cases a <;> cases b <;> cases c
+  · exact part8x279x0
+  · exact part8x279x1
+  · exact part8x279x2
+  · exact part8x279x3
+  · exact part8x279x4
+  · exact part8x279x5
+  · exact part8x279x6
+  · exact part8x279x7
+
+end HalfIndexRows
