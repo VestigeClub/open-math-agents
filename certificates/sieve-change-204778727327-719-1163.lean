@@ -11,6 +11,8 @@ the Palomar proof of Daniel Veljjanoski and rleshner (Apache-2.0). The recurrenc
 of primes already sieved and uses it when a square bound terminates a branch.
 -/
 
+namespace Sieve204778727327From719To1163
+
 namespace ShortPeriod30030
 
 open Finset
@@ -1139,6 +1141,9 @@ def prime (n : ℕ) : Bool := quick n
 theorem prime_ok (n : ℕ) (hn : n≤745089) : prime n=true ↔ n.Prime := quick_ok hn
 end FastDenseA26
 
+end Sieve204778727327From719To1163
+
+open Sieve204778727327From719To1163
 open Finset
 namespace IndexedSlicedW17SieveA25From128To192
 
@@ -1150,10 +1155,10 @@ lemma legendre {ps : List ℕ} (hsort : ps.Pairwise (· > ·)) (hprime : ∀ p �
   have mem_sieveSet {ps : List ℕ} {x n : ℕ} :
       n ∈ sieveSet ps x ↔ (1 ≤ n ∧ n ≤ x) ∧ ∀ p ∈ ps, ¬ p ∣ n := by
     simp [sieveSet]
-  
+
   have sieveSet_nil (x : ℕ) : sieveSet [] x = Finset.Icc 1 x := by
     ext n; simp [sieveSet]
-  
+
   /- Legendre's recursion step. -/
   have card_sieveSet_cons {p : ℕ} {ps : List ℕ} (hp : p.Prime) (hps : ∀ q ∈ ps, q.Prime ∧ q ≠ p)
       (x : ℕ) :
@@ -1185,7 +1190,7 @@ lemma legendre {ps : List ℕ} (hsort : ps.Pairwise (· > ·)) (hprime : ∀ p �
     rw [himage, Finset.card_image_of_injective _ (mul_right_injective₀ hp.ne_zero)] at hcard
     rw [hsplit]
     omega
-  
+
   /- Pruning: below `p`, only `1` survives the sieve by all primes less than `p`. -/
   have card_sieveSet_of_lt {p : ℕ} {ps : List ℕ} (hps : ∀ q ∈ ps, q.Prime)
       (hcomplete : ∀ q, q.Prime → q < p → q ∈ ps) {x : ℕ} (hx : x < p) :
@@ -1209,7 +1214,7 @@ lemma legendre {ps : List ℕ} (hsort : ps.Pairwise (· > ·)) (hprime : ∀ p �
             omega
           · intro q hq; exact Nat.Prime.not_dvd_one (hps q hq)
       rw [this, Finset.card_singleton]
-  
+
   change _ = (sieveSet ps x).card
   induction ps generalizing x with
   | nil => simp [sieveSet_nil]
